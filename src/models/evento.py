@@ -1,26 +1,24 @@
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import tuple,list,set, Optional
 
-
-class evento:
-
-
-    def __init__(self, eventoId:int, magnitud:float, profundidad:float,
-                 x:float, y :float, fecha: datetime, estacion: str, revision:int=1, estado_pendiente: str="pendiente"
-    ):
-
-        self.eventoId = int(eventoId)
-        self.magnitud= float(magnitud)
-        self.profundidad = float(profundidad)
-        self.x= float(x)
-        self.y= float(y)
-        self.fecha = datetime
-        self.estacion = str(estacion)
-        self.revision = int(revision)
-        self.estado_pendiente = estado_pendiente
+@dataclass()
+class Evento:
 
 
-    #ID Inmutables
+    eventoId : int
+    magnitud : float
+    profundidad : float
+    prioridad:int = 0
+    x : float
+    y : float
+    fecha :datetime
+    estaciones : set = field(default_factory = set)
+    revision : int
+    estado_pendiente = "Pendiente"
+
+
+    @property
     def id(self)-> int:
         return self._id
 
@@ -44,7 +42,7 @@ class evento:
 
     def obtener_clave(self) -> tuple[int,float,int]:
 
-        return (self.prioridad,self.magnitud,self.id)
+        return (self.prioridad,self.magnitud,self.eventoId)
 
     def actualizar_evento(
             self,nuevaMagnitud:float,
@@ -71,5 +69,6 @@ class evento:
             self.revision += 1
 
 
-    def __muestra__(self)-> str:
+    def __str__(self)-> str:
         return f"Eventp(SIS-{self._id:06d}, K={self.obtener_clave()}, Rev={self.revision})"
+ 
