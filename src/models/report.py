@@ -1,29 +1,52 @@
+from models.Station import Station
+from models.Event import Event
 
 
-from dataclasses import dataclass
-from datetime import datetime
-
-from models.evento import Evento
-from models.station import Station
-
-
-@dataclass()
 class Report:
-    identifier: int
-    revision: int
-    station: str
-    magnitude: float
-    depth: float
-    x: float
-    y: float
-    date_time : datetime
 
-    def show_report(self)-> str:
+    def __init__(
+        self,
+        identifier,
+        revision,
+        station: Station,
+        magnitude,
+        depth,
+        x,
+        y,
+        date_time,
+        event: Event = None
+    ):
 
-        return(f"Report(Station: {self.station} | Rev: {self.revision} | "
-               f"Event SIS-{self.identifier:06d} | Mag: {self.magnitude}"
-               f"Depth: {self.depth}km | Coord: ({self.x},{self.y}) | "
-               f"Date: {self.date_time.strftime('%Y-%m-%dT%H:%M:%SZ')})")
-        
-        
+        self.identifier = int(identifier)
+        self.revision = int(revision)
 
+        self.station = station
+
+        self.magnitude = float(magnitude)
+        self.depth = float(depth)
+
+        self.x = float(x)
+        self.y = float(y)
+
+        self.date_time = date_time
+
+        # Puede ser None mientras el reporte
+        # todavía no haya sido procesado.
+        self.event = event
+
+        self.decision = None
+
+
+    def show_report(self):
+
+        return (
+            f"Report("
+            f"Station: {self.station.name} | "
+            f"Revision: {self.revision} | "
+            f"Event: SIS-{self.identifier:06d} | "
+            f"Magnitude: {self.magnitude} | "
+            f"Depth: {self.depth} km | "
+            f"Coordinates: ({self.x}, {self.y}) | "
+            f"Date: {self.date_time}"
+            f")"
+        )

@@ -1,16 +1,21 @@
 
-
-from dataclasses import dataclass
-
-
-@dataclass(frozen=True)
 class Station:
 
-    name:str
-    x: float
-    y: float
+    def __init__(
+        self,
+        name,
+        x,
+        y
+    ):
+
+        self.name = name
+        self.x = float(x)
+        self.y = float(y)
 
 
-    def __str__(self)->str:
+    def __str__(self):
 
-        return f"Station: ({self.name}, Coord:({self.x},{self.y}))"
+        return (
+            f"Station({self.name}, "
+            f"coordinates=({self.x}, {self.y}))"
+        )
