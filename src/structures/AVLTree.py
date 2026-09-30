@@ -108,7 +108,9 @@ class AVLTree:
 
             return None
 
-
+        """
+        Cuando va a insertar un nuevoi evento, se debe guardar algo tipo asi: {'evento_id':'77u34tyr764'}
+        """
         # Una llave menor va hacia la izquierda.
         if new_key < current_key:
 
@@ -1023,8 +1025,14 @@ class AVLTree:
         # -----------------------------------------------------
         # CASO 1:
         # Nodo sin hijos.
-        # -----------------------------------------------------
+        # ----------------------------------------------------
 
+        # data = {'evento': nodoantesdeeliminar.to_dict(), 'type': 'delete'}
+        # O esta otra forma
+        # data = {'evento': nodoantesdeeliminar.to_dict(), 'type': ActionType.DELETE} #NOTA ActionType.DELETE debe ser string
+        # FilesUtils.write_json()
+        # Justo despues de esta linea ya se puede eliminar
+        # 
         if (
             node.get_left() is None
             and

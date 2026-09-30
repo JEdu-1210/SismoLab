@@ -110,3 +110,11 @@ class Event:
             f"Revision={self.revision}"
             f")"
         )
+
+    def to_dict(self):
+        return {
+            "magnitude":self.magnitude, 
+        }
+
+
+ 

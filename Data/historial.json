@@ -1,0 +1,60 @@
+{
+  "historial_reportes": [
+    {
+      "reporte_id": 1,
+      "evento": {
+        "magnitud": 4.2,
+        "prioridad": 3,
+        "evento_id": "S81727712",
+        "coordenadas": [1, 5],
+        "fecha": "16-09-2026....",
+        "estacion": 1,
+        "revision": 1,
+        "estado": "pendiente"
+      }
+    }
+  ],
+  "historial_acciones": [
+    {
+      "tipo": "balance",
+      "arbol_completo_desbalanceado": {
+       
+      }
+    },
+    {
+      "tipo": "unbalance",
+      "arbol_completo_balanceado": {
+      }
+    },
+    {
+      "tipo": "delete",
+      "evento": {
+        "magnitud": 4.2,
+        "prioridad": 3,
+        "evento_id": "S81727712",
+        "coordenadas": [1, 5],
+        "fecha": "16-09-2026....",
+        "estacion": 1,
+        "revision": 1,
+        "estado": "pendiente"
+      }
+    },
+    {
+      "tipo": "archive",
+      "evento": {
+        "magnitud": 4.2,
+        "prioridad": 3,
+        "evento_id": "S81727712",
+        "coordenadas": [1, 5],
+        "fecha": "16-09-2026....",
+        "estacion": 1,
+        "revision": 1,
+        "estado": "pendiente"
+      }
+    },
+    {
+      "tipo": "add",
+      "eventoId": [3, 2,"S81727712"]
+    }
+  ]
+}
