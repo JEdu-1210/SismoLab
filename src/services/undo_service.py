@@ -4,7 +4,7 @@ from src.models.UndoAction import UndoAction
 from src.models.Returnings import DataAndMsgReturn
 from src.services.persistencia import PersistenceService
 from src.models.Event import Event
-from src.models.Report import Report
+from src.models.report import Report
 
 
 class UndoService:

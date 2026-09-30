@@ -8,7 +8,7 @@ from src.models.Returnings import BaseReturn, DataAndMsgReturn
 from src.models.Version import Version
 from src.services.persistencia import PersistenceService
 from src.models.Event import Event
-from src.models.Report import Report
+from src.models.report import Report
 
 
 class VersionService:
