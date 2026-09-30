@@ -1,4 +1,4 @@
-from models.Station import Station
+from models.station import Station
 from models.Event import Event
 
 
@@ -43,10 +43,25 @@ class Report:
             f"Report("
             f"Station: {self.station.name} | "
             f"Revision: {self.revision} | "
-            f"Event: SIS-{self.identifier:06d} | "
+            f"Event: S""IS-{self.identifier:06d} | "
             f"Magnitude: {self.magnitude} | "
             f"Depth: {self.depth} km | "
             f"Coordinates: ({self.x}, {self.y}) | "
             f"Date: {self.date_time}"
             f")"
         )
+    def to_dict(self) -> dict:
+        return {
+            "identifier": self.identifier,
+            "revision": self.revision,
+            # Se convierte la estación a diccionario
+            "station": self.station.to_dict() if hasattr(self.station, "to_dict") else self.station,
+            "magnitude": self.magnitude,
+            "depth": self.depth,
+            "x": self.x,
+            "y": self.y,
+            "date_time": self.date_time.isoformat() if hasattr(self.date_time, "isoformat") else str(self.date_time),
+            # Se incluyen el evento asociado y la decisión tomada
+            "event": self.event.to_dict() if self.event and hasattr(self.event, "to_dict") else None,
+            "decision": self.decision
+        }

@@ -230,3 +230,8 @@ class History:
             +
             right_count
         )
+
+    def to_dict(self):
+        return{
+            "archived_roots":self._archived_roots
+        }

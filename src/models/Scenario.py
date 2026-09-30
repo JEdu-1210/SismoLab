@@ -1,5 +1,5 @@
-from models.Station import Station
-from models.Zone import Zone
+from models.station import Station
+from models.zone import Zone
 
 
 class Scenario:

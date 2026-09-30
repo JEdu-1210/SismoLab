@@ -33,3 +33,11 @@ class Association:
     def get_aftershock_event(self):
 
         return self._aftershock_event
+
+
+    def to_dict(self):
+        return {
+            "reference_event": self._reference_event,
+            "aftershock_event": self._aftershock_event
+        }
+    

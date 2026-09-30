@@ -112,8 +112,17 @@ class Event:
         )
 
     def to_dict(self):
+
         return {
-            "magnitude":self.magnitude, 
+            "identifier": self.identifier,
+            "magnitude": self.magnitude,
+            "depth": self.depth,
+            "x": self.x,
+            "y": self.y,
+            "date_time": self.date_time,
+            "revision": self.revision,
+            "priority": self.priority,
+            "is_populated_zone": self.is_populated_zone
         }
 
 

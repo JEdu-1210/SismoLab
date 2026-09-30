@@ -3,8 +3,6 @@ from pathlib import Path
 import json
 from typing import Any
 from src.models.Returnings import BaseReturn, DataAndMsgReturn
-
-
 class FilesUtils:
     @staticmethod
     def file_exists(filename: str) -> bool:

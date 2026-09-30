@@ -1027,7 +1027,7 @@ class AVLTree:
         # Nodo sin hijos.
         # ----------------------------------------------------
 
-        # data = {'evento': nodoantesdeeliminar.to_dict(), 'type': 'delete'}
+        # data = {'evento': nodoantesdeeliminar.__dict__, 'type': 'delete'}
         # O esta otra forma
         # data = {'evento': nodoantesdeeliminar.to_dict(), 'type': ActionType.DELETE} #NOTA ActionType.DELETE debe ser string
         # FilesUtils.write_json()
