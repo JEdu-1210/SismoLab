@@ -247,3 +247,17 @@ class Metrics:
         self._right_rotations = (
             data["right_rotations"]
         )
+    def to_dict(self) -> dict:
+        """Exporta el resumen en formato diccionario para JSON/Undo/Versiones."""
+        return self.get_summary()
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'Metrics':
+        """Crea una nueva instancia de Metrics cargando los datos guardados."""
+        metrics_instance = cls()
+        if data:
+            metrics_instance.load_summary(data)
+        return metrics_instance
+    
+    
+    
