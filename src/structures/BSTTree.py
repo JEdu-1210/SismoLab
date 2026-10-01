@@ -66,6 +66,8 @@ class BSTTree:
             return None
 
 
+        # si la  llave actual no tiene hijos, se inserta el nuevo nodo como hijo izquierdo o derecho según corresponda.
+        # si la llave actual tiene hijos, se llama recursivamente a _insert() en el hijo izquierdo o derecho según corresponda.
         # llaves mayores van a la derecha.
         if new_key > current_key:
 
@@ -355,6 +357,48 @@ class BSTTree:
 
         self._inorder(
             current_node.get_right(),
+            traversal
+        )
+
+
+
+    # ---------------------------------------------------------
+    # REVERSE INORDER
+    # Right - Root - Left
+    #
+    # Produce las claves en orden descendente.
+    # ---------------------------------------------------------
+
+    def reverse_inorder(self):
+
+        traversal = []
+
+        self._reverse_inorder(
+            self._root,
+            traversal
+        )
+
+        return traversal
+
+
+    def _reverse_inorder(
+        self,
+        current_node,
+        traversal
+    ):
+
+        if current_node is None:
+            return
+
+        self._reverse_inorder(
+            current_node.get_right(),
+            traversal
+        )
+
+        traversal.append(current_node)
+
+        self._reverse_inorder(
+            current_node.get_left(),
             traversal
         )
 

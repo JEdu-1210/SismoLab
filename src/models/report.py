@@ -1,6 +1,5 @@
-from models.station import Station
 from models.Event import Event
-
+from models.Station import Station
 
 class Report:
 
