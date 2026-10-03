@@ -2,7 +2,7 @@ from datetime import datetime
 
 from models.Station import Station
 from models.Zone import Zone
-
+from math import isfinite
 
 class Scenario:
 
@@ -41,10 +41,38 @@ class Scenario:
         self.r_km = float(
             r_km
         )
+        if (
+            not isfinite(self.w_hours)
+            or self.w_hours <= 0
+        ):
+            raise ValueError(
+                "W must be positive"
+            )
 
-        self.access_limit = int(
-            access_limit
-        )
+        if (
+            not isfinite(self.r_km)
+            or self.r_km <= 0
+        ):
+            raise ValueError(
+                "R must be positive"
+            )
+
+        if (
+            isinstance(access_limit, bool)
+            or
+            not isinstance(access_limit, int)
+            or
+            access_limit < 0
+        ):
+
+            raise ValueError(
+                "Access limit must be "
+                "a non-negative integer"
+            )
+
+
+        self.access_limit = access_limit
+
 
         self.archive_age_hours = float(
             archive_age_hours
@@ -60,6 +88,12 @@ class Scenario:
         self._zones = []
         self._stations = []
 
+        # Diccionario auxiliar para localizar eventos
+        # directamente mediante su identificador.
+        #
+        # Conserva eventos activos, archivados
+        # y eliminados.
+        self._events_by_id = {}
 
     # ==================================================
     # ZONES
@@ -275,7 +309,75 @@ class Scenario:
             self._stations
         )
 
+    # Busca una estación utilizando su nombre.
+    def get_station_by_name(
+        self,
+        station_name
+    ):
 
+        for station in self._stations:
+
+            if station.name == station_name:
+                return station
+
+        return None
+
+    # Busca un evento mediante su identificador.
+    #
+    # Puede retornar un evento activo,
+    # archivado o eliminado.
+    def get_event_by_id(
+        self,
+        identifier
+    ):
+
+        return self._events_by_id.get(
+            int(identifier)
+        )
+
+
+    # Comprueba si un identificador
+    # ya fue registrado alguna vez.
+    def has_event_id(
+        self,
+        identifier
+    ):
+
+        return (
+            int(identifier)
+            in
+            self._events_by_id
+        )
+
+
+    # Registra un Event dentro del escenario.
+    #
+    # Un identificador nunca puede
+    # registrarse dos veces.
+    def register_event(
+        self,
+        event
+    ):
+
+        if event.identifier in self._events_by_id:
+            return False
+
+        self._events_by_id[
+            event.identifier
+        ] = event
+
+        return True
+
+
+    # Retorna una copia del diccionario
+    # de eventos registrados.
+    def get_events_by_id(self):
+
+        return dict(
+            self._events_by_id
+        )
+
+    
     # SIMULATION CLOCK
     # Comprueba que el reloj sea
     # un datetime válido en UTC
@@ -405,3 +507,113 @@ class Scenario:
         return (
             self.stress_mode
         )
+
+    # Retorna el limite de antiguedad utilizado para archivar ramas.
+    def get_archive_age_hours(self):
+
+        return self.archive_age_hours
+
+
+    # Cambia T.
+    # Debe ser un valor positivo.
+    def set_archive_age_hours(
+        self,
+        hours
+    ):
+
+        try:
+            hours = float(hours)
+
+        except (TypeError, ValueError):
+            return False
+
+
+        if not isfinite(hours) or hours <= 0:
+            return False
+
+        self.archive_age_hours = hours
+
+        return True
+
+
+    # seccion de parametros del escenario, W y R, que son utilizados para determinar si 
+    # un evento es relevante o no, y si un evento es relevante o no depende 
+    # de la distancia y el tiempo transcurrido desde el evento.
+    # Retorna W en horas.
+    def get_w_hours(self):
+
+        return self.w_hours
+
+
+    # Cambia W.
+    # Debe ser un número positivo y finito.
+    def set_w_hours(
+        self,
+        hours
+    ):
+
+        try:
+            hours = float(hours)
+
+        except (TypeError, ValueError):
+            return False
+
+        if not isfinite(hours) or hours <= 0:
+            return False
+
+        self.w_hours = hours
+        return True
+
+
+    # Retorna R en kilómetros.
+    def get_r_km(self):
+
+        return self.r_km
+
+
+    # Cambia R.
+    # Debe ser un número positivo y finito.
+    def set_r_km(
+        self,
+        km
+    ):
+
+        try:
+            km = float(km)
+
+        except (TypeError, ValueError):
+            return False
+
+        if not isfinite(km) or km <= 0:
+            return False
+
+        self.r_km = km
+        return True
+
+    # ACCESS LIMIT
+    # Retorna el límite L.
+    def get_access_limit(self):
+
+        return self.access_limit
+
+    # Cambia el límite L.
+    # Debe ser un entero no negativo.
+    def set_access_limit(
+        self,
+        access_limit
+    ):
+
+        if (
+            isinstance(access_limit, bool)
+            or
+            not isinstance(access_limit, int)
+            or
+            access_limit < 0
+        ):
+
+            return False
+
+
+        self.access_limit = access_limit
+
+        return True

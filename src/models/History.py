@@ -1,5 +1,5 @@
 from structures.AVLNode import AVLNode
-
+from structures.AVLTree import AVLTree
 
 class History:
 
@@ -141,7 +141,76 @@ class History:
             current_node.get_right()
         )
 
+    # Extrae un solo Event del histórico.
+    # Los demás Events archivados permanecen dentro de History.
+    def extract_event_by_id(
+        self,
+        identifier
+    ):
 
+        identifier = int(identifier)
+
+
+        for index, root in enumerate(
+            self._archived_roots
+        ):
+
+            archived_node = self._search_by_id(
+                identifier,
+                root
+            )
+
+
+            if archived_node is None:
+                continue
+
+
+            # Utilizamos temporalmente un AVLTree
+            # para poder reutilizar su eliminación.
+            temporary_tree = AVLTree()
+
+            temporary_tree.set_root(
+                root
+            )
+
+
+            extracted_event = temporary_tree.delete(
+                archived_node.get_key(),
+                rebalance=True
+            )
+
+
+            if extracted_event is None:
+                return None
+
+
+            new_root = temporary_tree.get_root()
+
+
+            # Si era el único nodo de esa rama,
+            # desaparece esa raíz del History.
+            if new_root is None:
+
+                self._archived_roots.pop(
+                    index
+                )
+
+
+            # Si quedaron nodos archivados,
+            # guardamos la nueva raíz resultante.
+            else:
+
+                new_root.set_parent(None)
+
+                self._archived_roots[
+                    index
+                ] = new_root
+
+
+            return extracted_event
+
+
+        return None
     # Retorna todos los eventos archivados.
     def get_all_events(self):
 

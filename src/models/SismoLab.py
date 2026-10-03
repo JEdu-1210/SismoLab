@@ -214,6 +214,11 @@ class SismoLab:
 
         return True
 
+    # Elimina todas las asociaciones actuales. Se utilizará cuando sea necesario
+    # recalcularlas completamente.
+    def clear_associations(self):
+
+        self._associations.clear()
 
     # RETIRED IDENTIFIERS
 

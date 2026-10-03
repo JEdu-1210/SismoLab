@@ -42,7 +42,7 @@ class Report:
             f"Report("
             f"Station: {self.station.name} | "
             f"Revision: {self.revision} | "
-            f"Event: S""IS-{self.identifier:06d} | "
+            f"Event: SIS-{self.identifier:06d} | "
             f"Magnitude: {self.magnitude} | "
             f"Depth: {self.depth} km | "
             f"Coordinates: ({self.x}, {self.y}) | "

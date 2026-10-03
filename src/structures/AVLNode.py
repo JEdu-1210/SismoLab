@@ -6,6 +6,9 @@ class AVLNode:
     def __init__(self, event: Event):
 
         self._event = event
+        # Indica si el acceso a este nodo
+        # se considera costoso según el límite L.
+        self._costly_access = False
 
         # Una hoja tiene altura 0.
         self._height = 0
@@ -46,6 +49,18 @@ class AVLNode:
 
         self._height = height
 
+    # Retorna True si el nodo tiene acceso costoso.
+    def is_costly_access(self):
+
+        return self._costly_access
+
+    # Cambia la marca de acceso costoso.
+    def set_costly_access(
+        self,
+        value
+    ):
+
+        self._costly_access = bool(value)
 
     # Retorna el hijo izquierdo.
     def get_left(self):
