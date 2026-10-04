@@ -8,8 +8,7 @@ class Association:
         reference_event: Event,
         aftershock_event: Event
     ):
-
-        # Un evento no puede ser referencia de sí mismo.
+        # Un evento no puede ser referencia de sí mismo
         if (
             reference_event.identifier
             ==
@@ -22,22 +21,19 @@ class Association:
         self._reference_event = reference_event
         self._aftershock_event = aftershock_event
 
-
-    # Retorna el evento que funciona como referencia.
-    def get_reference_event(self):
-
+    def get_reference_event(self) -> Event:
         return self._reference_event
 
-
-    # Retorna el evento considerado réplica.
-    def get_aftershock_event(self):
-
+    def get_aftershock_event(self) -> Event:
         return self._aftershock_event
 
-
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        """
+        Retorna la representación en diccionario serializable a JSON.
+        """
         return {
-            "reference_event": self._reference_event,
-            "aftershock_event": self._aftershock_event
+            "reference_event_id": self._reference_event.identifier,
+            "aftershock_event_id": self._aftershock_event.identifier,
+            "reference_event": self._reference_event.to_dict() if hasattr(self._reference_event, "to_dict") else self._reference_event,
+            "aftershock_event": self._aftershock_event.to_dict() if hasattr(self._aftershock_event, "to_dict") else self._aftershock_event
         }
-    

@@ -301,6 +301,19 @@ class History:
         )
 
     def to_dict(self):
-        return{
-            "archived_roots":self._archived_roots
+        return {
+            "archived_roots": [self._serialize_node(root) for root in self._archived_roots]
         }
+
+    def _serialize_node(self, node):
+        if node is None:
+            return None
+
+        event = node.get_event()
+        return {
+            "event": event.to_dict() if hasattr(event, "to_dict") else event,
+            "height": node.get_height(),
+            "left": self._serialize_node(node.get_left()),
+            "right": self._serialize_node(node.get_right())
+        }
+    
