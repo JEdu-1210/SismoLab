@@ -1,4 +1,4 @@
-﻿from src.models.Event import Event
+from src.models.Event import Event
 
 
 class Association:

@@ -21,12 +21,11 @@ class UndoService:
         sismolab
     ):
 
-        return (
-            PersistenceService
-            .export_state(
-                sismolab
-            )
-        )
+        action = UndoAction(
+    action_type=action_type,
+    state_before=previous_state,
+    description=description
+)
 
 
     # =========================================================
