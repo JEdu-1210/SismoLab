@@ -1,9 +1,11 @@
-from datetime import datetime
-from business.PriorityService import PriorityService
-from models.Event import Event
-from models.Status import CatalogStatus, AttentionStatus
-from business.AssociationService import AssociationService
-from business.AccessService import AccessService
+﻿from datetime import datetime
+from src.business.PriorityService import PriorityService
+from src.models.Event import Event
+from src.models.Status import CatalogStatus, AttentionStatus
+from src.business.AssociationService import AssociationService
+from src.business.AccessService import AccessService
+from src.services.undo_service import UndoService
+from src.services.persistencia import PersistenceService
 
 class EventService:
 
@@ -27,6 +29,8 @@ class EventService:
                 sismolab
             )
         )
+
+        self.undo_service = UndoService()
 
     def calculate_event_data(
         self,
@@ -74,8 +78,8 @@ class EventService:
         )
 
 
-        # El reloj del escenario también
-        # debe ser un datetime válido.
+        # El reloj del escenario tambiÃ©n
+        # debe ser un datetime vÃ¡lido.
         if not isinstance(
             simulation_clock,
             datetime
@@ -120,7 +124,7 @@ class EventService:
             return False
 
 
-        # Un terremoto no puede haber ocurrido después del reloj de simulación.
+        # Un terremoto no puede haber ocurrido despuÃ©s del reloj de simulaciÃ³n.
         if (event.date_time > simulation_clock):
 
             print(
@@ -134,8 +138,8 @@ class EventService:
         return True
 
 
-    # CREACIÓN MANUAL DE EVENTOS
-    # Recibe los datos ingresados por el usuario, la revisión inicial de una creación
+    # CREACIÃ“N MANUAL DE EVENTOS
+    # Recibe los datos ingresados por el usuario, la revisiÃ³n inicial de una creaciÃ³n
     # manual siempre es 1
     def create_manual_event(
         self,
@@ -166,7 +170,7 @@ class EventService:
 
 
         # El identificador no puede haber sido
-        # utilizado anteriormente por ningún evento.
+        # utilizado anteriormente por ningÃºn evento.
         if scenario.has_event_id(identifier):
 
             return (
@@ -176,7 +180,7 @@ class EventService:
             )
 
 
-        # La estación debe existir
+        # La estaciÃ³n debe existir
         # dentro del Scenario.
         station = scenario.get_station_by_name(
             station_name
@@ -217,7 +221,7 @@ class EventService:
 
 
         # Creamos el objeto Event.
-        # Todavía NO se ha modificado ninguna estructura del sistema.
+        # TodavÃ­a NO se ha modificado ninguna estructura del sistema.
         try:
 
             event = Event(
@@ -251,7 +255,7 @@ class EventService:
             )
 
 
-        # La estación que originó el alta queda registrada como aceptada.
+        # La estaciÃ³n que originÃ³ el alta queda registrada como aceptada.
         event.add_accepted_station(
             station.name
         )
@@ -262,13 +266,21 @@ class EventService:
         avl_tree = self.sismolab.get_avl_tree()
 
         # El BST conserva los mismos eventos activos
-        # para permitir la comparación estructural.
+        # para permitir la comparaciÃ³n estructural.
         bst_tree = self.sismolab.get_bst_tree()
 
-        # En modo estrés el AVL conserva el orden BST,
+        # En modo estrÃ©s el AVL conserva el orden BST,
         # pero no realiza rotaciones.
         rebalance = not scenario.is_stress_mode()
 
+        state_before = (
+            self.undo_service
+            .capture_state(
+                self.sismolab
+            )
+        )
+
+        avl_tree.clear_rotation_log()
 
         # Primero insertamos en el AVL.
         inserted_avl_node = avl_tree.insert(
@@ -288,7 +300,7 @@ class EventService:
         # Luego insertamos el mismo Event en el BST.
         inserted_bst_node = bst_tree.insert(event)
 
-        # Si el BST falla, deshacemos la inserción
+        # Si el BST falla, deshacemos la inserciÃ³n
         # realizada anteriormente en el AVL.
         if inserted_bst_node is None:
 
@@ -309,9 +321,9 @@ class EventService:
         registered = scenario.register_event(event)
 
 
-        # Esta situación no debería ocurrir porque
+        # Esta situaciÃ³n no deberÃ­a ocurrir porque
         # ya comprobamos el ID, pero si ocurriera
-        # retiramos el Event de ambos árboles.
+        # retiramos el Event de ambos Ã¡rboles.
         if not registered:
 
             avl_tree.delete(
@@ -332,13 +344,26 @@ class EventService:
         # Una nueva alta puede cambiar las asociaciones de varios Events.
         self.association_service.recalculate_all()
 
-        # La inserción pudo cambiar profundidades del AVL.
+        # La inserciÃ³n pudo cambiar profundidades del AVL.
         self.access_service.update_access_marks()
 
-        # Después conectaremos aquí:
-        # - métricas
+        self.sismolab.get_metrics().register_rotation_log(
+            avl_tree.get_rotation_log()
+        )
+        # DespuÃ©s conectaremos aquÃ­:
+        # - mÃ©tricas
         # - Undo
-        # - actualización de la GUI
+        # - actualizaciÃ³n de la GUI
+
+        self.undo_service.push_snapshot(
+            self.sismolab,
+            "CREATE_EVENT",
+            (
+                f"Create event "
+                f"SIS-{event.identifier:06d}"
+            ),
+            state_before
+        )
 
         return (
             True,
@@ -378,8 +403,8 @@ class EventService:
                 })
 
 
-            # El evento consultado está asociado
-            # como posible réplica de otro.
+            # El evento consultado estÃ¡ asociado
+            # como posible rÃ©plica de otro.
             elif aftershock_event.identifier == event.identifier:
 
                 associations.append({
@@ -396,9 +421,9 @@ class EventService:
 
     # CONSULTA DE UN EVENTO
     # Busca un Event por su identificador
-    # y prepara la información que posteriormente
-    # mostrará la GUI. Se retorna un diccionario con los detalles del Event que se encontró,
-    #  o None si no se encontró.
+    # y prepara la informaciÃ³n que posteriormente
+    # mostrarÃ¡ la GUI. Se retorna un diccionario con los detalles del Event que se encontrÃ³,
+    #  o None si no se encontrÃ³.
     def get_event_details(
         self,
         identifier
@@ -407,7 +432,7 @@ class EventService:
         scenario = self.sismolab.get_scenario()
 
 
-        # Primero se comprueba que el ID tenga un formato válido.
+        # Primero se comprueba que el ID tenga un formato vÃ¡lido.
         try:
             identifier = int(identifier)
 
@@ -420,7 +445,7 @@ class EventService:
             )
 
 
-        # La búsqueda por ID se realiza utilizando el diccionario auxiliar.
+        # La bÃºsqueda por ID se realiza utilizando el diccionario auxiliar.
         event = scenario.get_event_by_id(
             identifier
         )
@@ -435,7 +460,7 @@ class EventService:
             )
 
 
-        # Información general del Event.
+        # InformaciÃ³n general del Event.
         details = event.to_dict()
 
         details["key"] = event.get_key()
@@ -450,7 +475,7 @@ class EventService:
         )
 
 
-        # Si no está activo, no buscamos nodo
+        # Si no estÃ¡ activo, no buscamos nodo
         # dentro del AVL.
         if event.catalog_status.value != "ACTIVE":
 
@@ -529,7 +554,7 @@ class EventService:
         )
 
     
-    # CORRECCIÓN MANUAL DE UN EVENTO
+    # CORRECCIÃ“N MANUAL DE UN EVENTO
     # Reemplaza uno o varios datos de un Event activo.
     # El identifier nunca puede modificarse.
     # Los valores que lleguen como None conservan el valor original del Event.
@@ -607,8 +632,8 @@ class EventService:
             )
 
 
-        # 1. Preparar los datos resultantes que tendrá el Event después de la corrección.
-        # Pero todavía NO modificamos el Event real.
+        # 1. Preparar los datos resultantes que tendrÃ¡ el Event despuÃ©s de la correcciÃ³n.
+        # Pero todavÃ­a NO modificamos el Event real.
 
         new_magnitude = (
             event.magnitude
@@ -616,8 +641,8 @@ class EventService:
             else magnitude
         )
         # Esto dice que si magnitude es None,
-        # new_magnitude será el valor original del evento, de lo contrario, 
-        # será el nuevo valor proporcionado.
+        # new_magnitude serÃ¡ el valor original del evento, de lo contrario, 
+        # serÃ¡ el nuevo valor proporcionado.
         new_depth = (
             event.depth
             if depth is None
@@ -669,8 +694,8 @@ class EventService:
 
 
         # 3. Crear un Event candidato.
-        # Sirve únicamente para comprobar que todos
-        # los datos nuevos sean válidos ANTES de
+        # Sirve Ãºnicamente para comprobar que todos
+        # los datos nuevos sean vÃ¡lidos ANTES de
         # modificar cualquier estructura.
 
         try:
@@ -737,10 +762,18 @@ class EventService:
         rebalance = (
             not scenario.is_stress_mode()
         )
+        
+        state_before = (
+            self.undo_service
+            .capture_state(
+                self.sismolab
+            )
+        )
 
+        avl_tree.clear_rotation_log()
 
         # 5. Si K cambia, primero comprobamos que
-        #    el Event exista en AMBOS árboles.
+        #    el Event exista en AMBOS Ã¡rboles.
         # Si no cambio no es necesario retirarlo y reinsertarlo, porque la clave sigue siendo la misma.
         if key_changed:
 
@@ -762,16 +795,45 @@ class EventService:
 
 
             # Retiramos usando la K ANTERIOR.
-            avl_tree.delete(
+            deleted_avl = avl_tree.delete(
                 old_key,
                 rebalance=rebalance
             )
 
-            bst_tree.delete(
+            # Si por alguna razÃ³n falla el AVL,
+            # recuperamos exactamente el estado anterior.
+            if deleted_avl is None:
+
+                PersistenceService.apply_state(
+                    self.sismolab,
+                    state_before
+                )
+
+                return (
+                    False,
+                    "The event could not be removed from the AVL",
+                    None
+                )
+
+
+            deleted_bst = bst_tree.delete(
                 old_key
             )
 
+            # Si el AVL ya cambiÃ³ pero falla el BST,
+            # restauramos TODO el snapshot anterior.
+            if deleted_bst is None:
 
+                PersistenceService.apply_state(
+                    self.sismolab,
+                    state_before
+                )
+
+                return (
+                    False,
+                    "The event could not be removed from the BST",
+                    None
+                )
         # 6. Aplicar los datos nuevos al Event real.
 
         event.magnitude = candidate.magnitude
@@ -791,14 +853,13 @@ class EventService:
         )
 
 
-        # Toda corrección aceptada
+        # Toda correcciÃ³n aceptada
         # devuelve el Event a pendiente.
         event.mark_as_pending()
 
 
-        # 7. Si K cambió, reinsertamos el mismo Event
+        # 7. Si K cambiÃ³, reinsertamos el mismo Event
         #    en AVL y BST con su nueva clave.
-
         if key_changed:
 
             inserted_avl = avl_tree.insert(
@@ -810,74 +871,16 @@ class EventService:
                 event
             )
 
-
-            # Este caso no debería ocurrir,
-            # pero si alguna reinserción falla
-            # intentamos restaurar el estado anterior.
             if (
                 inserted_avl is None
                 or
                 inserted_bst is None
             ):
 
-                # Retirar cualquier inserción nueva
-                # que sí haya ocurrido.
-                if inserted_avl is not None:
-
-                    avl_tree.delete(
-                        new_key,
-                        rebalance=rebalance
-                    )
-
-                if inserted_bst is not None:
-                    bst_tree.delete(new_key)
-
-
-                # Restaurar los datos anteriores.
-                event.magnitude = (
-                    old_state["magnitude"]
+                PersistenceService.apply_state(
+                    self.sismolab,
+                    state_before
                 )
-
-                event.depth = (
-                    old_state["depth"]
-                )
-
-                event.x = old_state["x"]
-                event.y = old_state["y"]
-
-                event.date_time = (
-                    old_state["date_time"]
-                )
-
-                event.revision = (
-                    old_state["revision"]
-                )
-
-                event.priority = (
-                    old_state["priority"]
-                )
-
-                event.is_populated_zone = (
-                    old_state[
-                        "is_populated_zone"
-                    ]
-                )
-
-                event.attention_status = (
-                    old_state[
-                        "attention_status"
-                    ]
-                )
-
-
-                # Reinsertar la versión anterior.
-                avl_tree.insert(
-                    event,
-                    rebalance=rebalance
-                )
-
-                bst_tree.insert(event)
-
 
                 return (
                     False,
@@ -886,23 +889,37 @@ class EventService:
                 )
 
 
-        # 8. Actualizar métricas.
+        # 8. Actualizar mÃ©tricas.
 
         metrics = self.sismolab.get_metrics()
 
         metrics.increment_accepted_corrections()
 
 
-        # Una corrección puede cambiar magnitud,
-        # tiempo o ubicación y por tanto alterar
+        # Una correcciÃ³n puede cambiar magnitud,
+        # tiempo o ubicaciÃ³n y por tanto alterar
         # varias asociaciones.
         self.association_service.recalculate_all()
 
-        # Una corrección puede cambiar K
+        # Una correcciÃ³n puede cambiar K
         # y producir reinserciones/rotaciones.
         self.access_service.update_access_marks()
 
+        self.sismolab.get_metrics().register_rotation_log(
+            avl_tree.get_rotation_log()
+        )
         # Posteriormente registrar Undo , refrescar la GUI
+
+        self.undo_service.push_snapshot(
+            self.sismolab,
+            "MANUAL_CORRECTION",
+            (
+                f"Correct event "
+                f"SIS-{event.identifier:06d}"
+            ),
+            state_before
+        )
+        
         return (
             True,
             "Event corrected successfully",
@@ -943,7 +960,7 @@ class EventService:
             )
 
         # Solo los eventos activos tienen
-        # estado de atención pendiente/revisado.
+        # estado de atenciÃ³n pendiente/revisado.
         if event.catalog_status != CatalogStatus.ACTIVE:
             return (
                 False,
@@ -952,7 +969,7 @@ class EventService:
             )
 
         # Si ya estaba revisado no necesitamos
-        # realizar ninguna modificación.
+        # realizar ninguna modificaciÃ³n.
         if event.attention_status == AttentionStatus.REVIEWED:
             return (
                 True,
@@ -960,16 +977,35 @@ class EventService:
                 event
             )
 
-        # Aquí posteriormente registraremos el estado anterior para Undo. 
+        #estado anterior para undo
+        state_before = (
+            self.undo_service
+            .capture_state(
+                self.sismolab
+            )
+        )
+
         # No modifica K, por lo tanto NO se toca AVL ni BST.
         event.mark_as_reviewed()
+
+        self.undo_service.push_snapshot(
+            self.sismolab,
+            "MARK_REVIEWED",
+            (
+                f"Mark event "
+                f"SIS-{event.identifier:06d} "
+                f"as reviewed"
+            ),
+            state_before
+        )
+
         return (
             True,
             "Event marked as reviewed",
             event
         )
 
-    # ELIMINACIÓN INDIVIDUAL DE UN EVENTO
+    # ELIMINACIÃ“N INDIVIDUAL DE UN EVENTO
 
     def delete_event(
         self,
@@ -1018,7 +1054,7 @@ class EventService:
 
 
         # Antes de modificar cualquier estructura
-        # comprobamos que exista en ambos árboles.
+        # comprobamos que exista en ambos Ã¡rboles.
         if avl_tree.search(old_key) is None:
             return (
                 False,
@@ -1033,16 +1069,29 @@ class EventService:
                 None
             )
 
+        state_before = (
+            self.undo_service
+            .capture_state(
+                self.sismolab
+            )
+        )
 
-        # Aquí despues registraremos el estado previo para Undo.
+        avl_tree.clear_rotation_log()
+        # AquÃ­ despues registraremos el estado previo para Undo.
 
-        # Retirar únicamente este Event del AVL.
+        # Retirar Ãºnicamente este Event del AVL.
         deleted_avl = avl_tree.delete(
             old_key,
             rebalance=rebalance
         )
 
         if deleted_avl is None:
+
+            PersistenceService.apply_state(
+                self.sismolab,
+                state_before
+            )
+
             return (
                 False,
                 "The event could not be deleted from the AVL",
@@ -1055,14 +1104,11 @@ class EventService:
             old_key
         )
 
-
-        # Si por alguna inconsistencia falla el BST,
-        # restauramos el Event en el AVL.
         if deleted_bst is None:
 
-            avl_tree.insert(
-                event,
-                rebalance=rebalance
+            PersistenceService.apply_state(
+                self.sismolab,
+                state_before
             )
 
             return (
@@ -1072,8 +1118,8 @@ class EventService:
             )
 
 
-        # La eliminación física de los árboles terminó correctamente.
-        # Ahora modificamos su estado de catálogo.
+        # La eliminaciÃ³n fÃ­sica de los Ã¡rboles terminÃ³ correctamente.
+        # Ahora modificamos su estado de catÃ¡logo.
         event.delete()
 
 
@@ -1092,16 +1138,28 @@ class EventService:
         # - rechazar reportes posteriores.
 
         # El Event eliminado deja de participar en asociaciones. Otros Events que lo utilizaban como
-        # referencia buscarán automáticamente la siguiente mejor referencia válida.
+        # referencia buscarÃ¡n automÃ¡ticamente la siguiente mejor referencia vÃ¡lida.
         self.association_service.recalculate_all()
 
-        # La eliminación y sus posibles rotaciones cambian profundidades.
+        # La eliminaciÃ³n y sus posibles rotaciones cambian profundidades.
         self.access_service.update_access_marks()
-        
-        # Posteriormente también agregaremos:
-        # - registro de Undo
-        # - actualización de indicadores/GUI
 
+        self.sismolab.get_metrics().register_rotation_log(
+            avl_tree.get_rotation_log()
+        )       
+        # Posteriormente tambiÃ©n agregaremos:
+        # - registro de Undo
+        # - actualizaciÃ³n de indicadores/GUI
+        
+        self.undo_service.push_snapshot(
+            self.sismolab,
+            "DELETE_EVENT",
+            (
+                f"Delete event "
+                f"SIS-{event.identifier:06d}"
+            ),
+            state_before
+        )
 
         return (
             True,
@@ -1120,8 +1178,8 @@ class EventService:
         scenario = self.sismolab.get_scenario()
 
 
-        # Aunque ReportService ya comprobó el ID,
-        # protegemos nuevamente la operación.
+        # Aunque ReportService ya comprobÃ³ el ID,
+        # protegemos nuevamente la operaciÃ³n.
         if scenario.has_event_id(
             candidate.identifier
         ):
@@ -1223,14 +1281,14 @@ class EventService:
     ):
 
         # accepted_stations es un set,
-        # por eso repetir la misma estación
+        # por eso repetir la misma estaciÃ³n
         # nunca genera duplicados.
         event.add_accepted_station(
             station.name
         )
 
 
-        # Una confirmación NO cambia:
+        # Una confirmaciÃ³n NO cambia:
         # - revision
         # - priority
         # - K
@@ -1334,7 +1392,7 @@ class EventService:
             )
 
 
-        # Aplicar la revisión recibida.
+        # Aplicar la revisiÃ³n recibida.
         event.magnitude = candidate.magnitude
         event.depth = candidate.depth
 
@@ -1493,7 +1551,7 @@ class EventService:
 
 
         # Primero comprobamos que realmente
-        # esté almacenado en History.
+        # estÃ© almacenado en History.
         archived_node = history.search_by_id(
             event.identifier
         )
@@ -1659,7 +1717,7 @@ class EventService:
             )
 
 
-        # Como cambió la información vigente,
+        # Como cambiÃ³ la informaciÃ³n vigente,
         # las asociaciones pueden cambiar.
         self.association_service.recalculate_all()
 

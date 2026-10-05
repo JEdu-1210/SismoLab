@@ -1,4 +1,4 @@
-from math import isfinite
+﻿from math import isfinite
 
 
 class Zone:
@@ -34,7 +34,7 @@ class Zone:
 
 
     # La zona es inmutable durante
-    # la ejecución del escenario.
+    # la ejecuciÃ³n del escenario.
     #
     # Por eso solo tiene propiedades
     # de lectura y no setters.
@@ -75,7 +75,7 @@ class Zone:
         return self._is_populated
 
 
-    # Valida únicamente los datos
+    # Valida Ãºnicamente los datos
     # internos de esta zona.
     def validate_attributes(self):
 
@@ -102,8 +102,8 @@ class Zone:
             return False
 
 
-        # Todos los límites deben
-        # ser números finitos.
+        # Todos los lÃ­mites deben
+        # ser nÃºmeros finitos.
         values = [
             self._x_min,
             self._x_max,
@@ -124,7 +124,7 @@ class Zone:
                 return False
 
 
-        # Todos los límites deben
+        # Todos los lÃ­mites deben
         # permanecer dentro del plano.
         if (
             self._x_min < 0.0
@@ -145,10 +145,10 @@ class Zone:
             return False
 
 
-        # Una zona debe tener área.
+        # Una zona debe tener Ã¡rea.
         #
-        # Por eso el mínimo debe ser
-        # estrictamente menor al máximo.
+        # Por eso el mÃ­nimo debe ser
+        # estrictamente menor al mÃ¡ximo.
         if (
             self._x_min
             >=
@@ -177,7 +177,7 @@ class Zone:
             return False
 
 
-        # La condición de poblada o
+        # La condiciÃ³n de poblada o
         # no poblada la decide quien
         # crea la zona.
         if not isinstance(
@@ -199,7 +199,7 @@ class Zone:
     # Determina si unas coordenadas
     # pertenecen a esta zona.
     #
-    # Los bordes también cuentan.
+    # Los bordes tambiÃ©n cuentan.
     def contains_point(
         self,
         x,
@@ -236,11 +236,11 @@ class Zone:
 
 
     # Determina si esta zona comparte
-    # área interior con otra zona.
+    # Ã¡rea interior con otra zona.
     #
     # Compartir solamente un borde
     # o una esquina NO se considera
-    # superposición.
+    # superposiciÃ³n.
     def overlaps_with(
         self,
         other_zone

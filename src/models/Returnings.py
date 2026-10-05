@@ -1,4 +1,4 @@
-from typing import Any
+﻿from typing import Any
 
 class BaseReturn:
     def __init__(self, ok: bool = True, error: Any | None = None):

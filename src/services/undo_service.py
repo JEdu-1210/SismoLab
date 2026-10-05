@@ -1,127 +1,686 @@
-from typing import Any, Optional
-from src.structures.Stack import Stack
+﻿from src.models.Returnings import DataAndMsgReturn
 from src.models.UndoAction import UndoAction
-from src.models.Returnings import DataAndMsgReturn
+
 from src.services.persistencia import PersistenceService
-from src.models.Event import Event
-from src.models.Report import Report
 
 
 class UndoService:
 
-    def __init__(self):
-        self.undo_stack: Stack = Stack()
+    # =========================================================
+    # CAPTURAR ESTADO
+    # =========================================================
 
-    def record_action(self, action_type: str, description: str, sismolab: Any) -> None:
-        """
-        Captura una foto completa del estado de SismoLab ANTES de aplicar un cambio.
-        """
-        previous_state = PersistenceService.export_state(sismolab)
+    # Obtiene una fotografÃ­a COMPLETA del estado
+    # operativo sin modificar todavÃ­a la pila.
+    #
+    # Esto es Ãºtil porque primero podemos ejecutar
+    # la operaciÃ³n y solamente guardar la acciÃ³n
+    # si realmente terminÃ³ correctamente.
+    def capture_state(
+        self,
+        sismolab
+    ):
 
-        action = UndoAction(
-            action_type=action_type,
-            description=description,
-            previous_state=previous_state
+        return (
+            PersistenceService
+            .export_state(
+                sismolab
+            )
         )
 
-        self.undo_stack.push(action)
 
-    def can_undo(self) -> bool:
-        """Comprueba si hay acciones disponibles en la pila."""
-        return not self.undo_stack.is_empty()
+    # =========================================================
+    # GUARDAR SNAPSHOT EN LA PILA
+    # =========================================================
 
-    def undo(self, sismolab: Any) -> DataAndMsgReturn:
-        """Extrae el último estado y lo restaura en SismoLab."""
+    def push_snapshot(
+        self,
+        sismolab,
+        action_type,
+        description,
+        state_before
+    ):
+
+        if state_before is None:
+            return False
+
+
+
+        # MÃ©tricas antes de la acciÃ³n.
+        before_metrics = (
+            state_before.get(
+                "metrics",
+                {}
+            )
+        )
+
+
+        # MÃ©tricas despuÃ©s de la acciÃ³n.
+        state_after = (
+            PersistenceService
+            .export_state(
+                sismolab
+            )
+        )
+
+        after_metrics = (
+            state_after.get(
+                "metrics",
+                {}
+            )
+        )
+
+
+        # Guardamos solamente los contadores
+        # que realmente cambiaron.
+        metric_effects = {}
+
+
+        all_metric_names = (
+            set(before_metrics.keys())
+            |
+            set(after_metrics.keys())
+        )
+
+
+        for metric_name in all_metric_names:
+
+            before_value = (
+                before_metrics.get(
+                    metric_name,
+                    0
+                )
+            )
+
+            after_value = (
+                after_metrics.get(
+                    metric_name,
+                    0
+                )
+            )
+
+
+            difference = (
+                after_value
+                -
+                before_value
+            )
+
+
+            if difference != 0:
+
+                metric_effects[
+                    metric_name
+                ] = difference
+
+
+        action = UndoAction(
+            action_type,
+            state_before,
+            description,
+            metric_effects
+        )
+
+        sismolab.get_undo_stack().push(
+            action
+        )
+
+
+        return True
+
+
+    # =========================================================
+    # REGISTRAR DIRECTAMENTE
+    # =========================================================
+
+    # Se conserva como mÃ©todo auxiliar para operaciones
+    # donde sabemos que inmediatamente despuÃ©s habrÃ¡
+    # una modificaciÃ³n.
+    #
+    # Para operaciones que pueden fallar es mejor:
+    #
+    # capture_state()
+    # ejecutar
+    # push_snapshot()
+    def record_action(
+        self,
+        action_type,
+        description,
+        sismolab
+    ):
+
+        state_before = (
+            self.capture_state(
+                sismolab
+            )
+        )
+
+
+        return self.push_snapshot(
+            sismolab,
+            action_type,
+            description,
+            state_before
+        )
+
+
+    # =========================================================
+    # CONSULTAR SI HAY UNDO
+    # =========================================================
+
+    def can_undo(
+        self,
+        sismolab
+    ):
+
+        return not (
+            sismolab
+            .get_undo_stack()
+            .is_empty()
+        )
+
+
+    # =========================================================
+    # DESHACER
+    # =========================================================
+
+    def undo(
+        self,
+        sismolab
+    ):
+
         response = DataAndMsgReturn()
 
-        if not self.can_undo():
-            response.msg = "No hay acciones operativas disponibles para deshacer."
+        stack = (
+            sismolab
+            .get_undo_stack()
+        )
+
+
+        if stack.is_empty():
+
+            response.ok = False
+            response.error = (
+                "There are no actions to undo"
+            )
+
             return response
 
-        try:
-            last_action: UndoAction = self.undo_stack.pop()
 
-            self._restore_snapshot(sismolab, last_action.previous_state)
+        # IMPORTANTE:
+        #
+        # Primero hacemos peek().
+        #
+        # No hacemos pop todavÃ­a porque si por
+        # alguna razÃ³n la restauraciÃ³n falla,
+        # no queremos perder la acciÃ³n.
+        action = stack.peek()
 
-            response.data = last_action
-            response.msg = f"Acción deshecha exitosamente: '{last_action.description}'"
 
-        except Exception as e:
-            response.error = str(e)
+        state_before = (
+            action.get_state_before()
+        )
+
+
+        restore_result = (
+            PersistenceService
+            .apply_state(
+                sismolab,
+                state_before,
+                success_message=(
+                    "Previous state restored "
+                    "successfully"
+                )
+            )
+        )
+
+
+        if not restore_result.ok:
+
+            response.ok = False
+
+            response.error = (
+                "Undo could not restore "
+                "the previous state: "
+                f"{restore_result.error}"
+            )
+
+            return response
+
+
+        # La restauraciÃ³n fue correcta.
+        # Ahora sÃ­ retiramos la acciÃ³n.
+        stack.pop()
+
+
+        response.data = {
+
+            "action_type":
+                action.get_action_type(),
+
+            "description":
+                action.get_description(),
+
+            "created_at":
+                action
+                .get_created_at()
+                .isoformat(),
+
+            "remaining_actions":
+                stack.size(),
+                
+            "metric_effects":
+                action.get_metric_effects(),
+        }
+
+
+        response.msg = (
+            "Action undone successfully: "
+            f"{action.get_description()}"
+        )
+
 
         return response
 
-    def _restore_snapshot(self, sismolab: Any, state_dict: dict) -> None:
-        """Restaura los atributos de SismoLab garantizando la reversibilidad completa."""
-        if not state_dict:
-            return
 
-        scenario = sismolab.get_scenario() if hasattr(sismolab, "get_scenario") else getattr(sismolab, "scenario", None)
+    # =========================================================
+    # HISTORIAL PARA LA GUI
+    # =========================================================
 
-        # 1. Restaurar Reloj, Parámetros (W, R, L, T) y Modo Estrés en el Escenario
-        if scenario:
-            if "clock" in state_dict and hasattr(scenario, "set_simulation_clock"):
-                scenario.set_simulation_clock(state_dict["clock"])
+    def get_undo_history(
+        self,
+        sismolab
+    ):
 
-            if "stress_mode" in state_dict and hasattr(scenario, "set_stress_mode"):
-                scenario.set_stress_mode(state_dict["stress_mode"])
+        response = DataAndMsgReturn()
 
-            params = state_dict.get("parameters", {})
-            if params:
-                if "w_hours" in params: scenario.w_hours = float(params["w_hours"])
-                if "r_km" in params: scenario.r_km = float(params["r_km"])
-                if "access_limit_L" in params and hasattr(scenario, "set_access_limit"):
-                    scenario.set_access_limit(int(params["access_limit_L"]))
-                if "archive_age_T" in params: scenario.archive_age_hours = float(params["archive_age_T"])
 
-        # 2. Restaurar IDs retirados/eliminados
-        retired_ids = set(state_dict.get("retired_ids", state_dict.get("deleted_ids", [])))
-        if hasattr(sismolab, "_retired_ids"):
-            sismolab._retired_ids = retired_ids
-        elif hasattr(sismolab, "retired_ids"):
-            sismolab.retired_ids = retired_ids
+        actions = (
+            sismolab
+            .get_undo_stack()
+            .get_actions()
+        )
 
-        # 3. Restaurar Asociaciones
-        if "associations" in state_dict:
-            if hasattr(sismolab, "_associations"):
-                sismolab._associations = state_dict["associations"]
 
-        # 4. Restaurar Métricas e Indicadores
-        if "metrics" in state_dict:
-            metrics_obj = sismolab.get_metrics() if hasattr(sismolab, "get_metrics") else getattr(sismolab, "metrics", None)
-            if metrics_obj:
-                if hasattr(metrics_obj, "load_summary"):
-                    metrics_obj.load_summary(state_dict["metrics"])
-                elif hasattr(metrics_obj, "from_dict"):
-                    sismolab._metrics = metrics_obj.from_dict(state_dict["metrics"])
+        # Mostramos primero la acciÃ³n
+        # que se desharÃ­a inmediatamente.
+        result = []
 
-        # 5. Restaurar Cola FIFO de Reportes
-        report_queue = sismolab.get_report_queue() if hasattr(sismolab, "get_report_queue") else getattr(sismolab, "report_queue", None)
-        if report_queue and "report_queue" in state_dict:
-            if hasattr(report_queue, "clear"):
-                report_queue.clear()
-            for r_dict in state_dict["report_queue"]:
-                report_obj = Report.from_dict(r_dict) if hasattr(Report, "from_dict") else Report(**r_dict)
-                report_queue.enqueue(report_obj)
 
-        # 6. Restaurar Histórico
-        history_obj = sismolab.get_history() if hasattr(sismolab, "get_history") else getattr(sismolab, "history", None)
-        if history_obj and "history" in state_dict:
-            if hasattr(history_obj, "load_from_dict"):
-                history_obj.load_from_dict(state_dict["history"])
-            elif hasattr(history_obj, "clear"):
-                history_obj.clear()
-                for e_dict in state_dict["history"]:
-                    history_obj.add_event(Event.from_dict(e_dict) if hasattr(Event, "from_dict") else Event(**e_dict))
+        for action in reversed(
+            actions
+        ):
 
-        # 7. Reconstruir Topología del Árbol AVL Activo
-        avl_tree = sismolab.get_avl_tree() if hasattr(sismolab, "get_avl_tree") else getattr(sismolab, "avl_tree", None)
-        if avl_tree and ("active_tree_topology" in state_dict or "active_topology" in state_dict):
-            topology_data = state_dict.get("active_tree_topology") or state_dict.get("active_topology")
-            from src.structures.AVLNode import AVLNode
-            reconstructed_root = PersistenceService.rebuild_tree_from_topology(topology_data, AVLNode)
-            
-            if hasattr(avl_tree, "set_root"):
-                avl_tree.set_root(reconstructed_root)
-            else:
-                avl_tree.root = reconstructed_root
+            result.append({
+
+                "action_type":
+                    action.get_action_type(),
+
+                "description":
+                    action.get_description(),
+
+                "created_at":
+                    action
+                    .get_created_at()
+                    .isoformat(),
+
+                "metric_effects":
+                    action.get_metric_effects()
+            })
+
+
+        response.data = {
+
+            "actions":
+                result,
+
+            "count":
+                len(result)
+        }
+
+
+        response.msg = (
+            f"{len(result)} undo "
+            "action(s) available"
+        )
+
+
+        return response
+
+
+    # =========================================================
+    # LIMPIAR PILA
+    # =========================================================
+
+    def clear(
+        self,
+        sismolab
+    ):
+
+        sismolab.get_undo_stack().clear()
+
+
+    # =========================================================
+    # CARGA POR INSERCIONES + UNDO
+    # =========================================================
+
+    # La GUI debe utilizar ESTE mÃ©todo cuando
+    # quiera cargar un archivo por inserciones.
+    #
+    # De esa manera toda la carga cuenta como
+    # UNA sola acciÃ³n de Undo.
+    def load_by_insertions(
+        self,
+        filepath,
+        sismolab
+    ):
+
+        state_before = (
+            self.capture_state(
+                sismolab
+            )
+        )
+
+
+        result = (
+            PersistenceService
+            .load_by_insertions(
+                filepath,
+                sismolab
+            )
+        )
+
+
+        if result.ok:
+
+            self.push_snapshot(
+                sismolab,
+                "LOAD_BY_INSERTIONS",
+                "Load scenario by insertions",
+                state_before
+            )
+
+
+        return result
+
+
+    # =========================================================
+    # CARGA POR TOPOLOGÃA + UNDO
+    # =========================================================
+
+    def load_by_topology(
+        self,
+        filepath,
+        sismolab
+    ):
+
+        state_before = (
+            self.capture_state(
+                sismolab
+            )
+        )
+
+
+        result = (
+            PersistenceService
+            .load_by_topology(
+                filepath,
+                sismolab
+            )
+        )
+
+
+        if result.ok:
+
+            self.push_snapshot(
+                sismolab,
+                "LOAD_BY_TOPOLOGY",
+                "Load scenario by topology",
+                state_before
+            )
+
+
+        return result
+
+
+    # =========================================================
+    # AVANZAR RELOJ + UNDO
+    # =========================================================
+
+    def advance_simulation_clock(
+        self,
+        sismolab,
+        new_date_time
+    ):
+
+        response = DataAndMsgReturn()
+
+        scenario = (
+            sismolab.get_scenario()
+        )
+
+
+        state_before = (
+            self.capture_state(
+                sismolab
+            )
+        )
+
+
+        if not scenario.set_simulation_clock(
+            new_date_time
+        ):
+
+            response.ok = False
+
+            response.error = (
+                "Simulation clock could "
+                "not be advanced"
+            )
+
+            return response
+
+
+        self.push_snapshot(
+            sismolab,
+            "ADVANCE_CLOCK",
+            "Advance simulation clock",
+            state_before
+        )
+
+
+        response.data = {
+
+            "simulation_clock":
+                scenario
+                .get_simulation_clock()
+                .isoformat()
+        }
+
+
+        response.msg = (
+            "Simulation clock advanced"
+        )
+
+
+        return response
+
+
+    # =========================================================
+    # CAMBIAR T + UNDO
+    # =========================================================
+
+    def update_archive_age(
+        self,
+        sismolab,
+        hours
+    ):
+
+        response = DataAndMsgReturn()
+
+        scenario = (
+            sismolab.get_scenario()
+        )
+
+
+        state_before = (
+            self.capture_state(
+                sismolab
+            )
+        )
+
+
+        if not scenario.set_archive_age_hours(
+            hours
+        ):
+
+            response.ok = False
+
+            response.error = (
+                "T must be a positive "
+                "finite number"
+            )
+
+            return response
+
+
+        self.push_snapshot(
+            sismolab,
+            "CHANGE_ARCHIVE_AGE",
+            "Change archive age T",
+            state_before
+        )
+
+
+        response.data = {
+
+            "archive_age_hours":
+                scenario
+                .get_archive_age_hours()
+        }
+
+
+        response.msg = (
+            "Archive age T updated"
+        )
+
+
+        return response
+
+
+    # =========================================================
+    # CAMBIAR W/R + UNDO
+    # =========================================================
+
+    def update_association_limits(
+        self,
+        sismolab,
+        association_service,
+        w_hours=None,
+        r_km=None
+    ):
+
+        state_before = (
+            self.capture_state(
+                sismolab
+            )
+        )
+
+
+        (
+            success,
+            message,
+            data
+        ) = (
+            association_service
+            .update_limits(
+                w_hours=w_hours,
+                r_km=r_km
+            )
+        )
+
+
+        if success:
+
+            self.push_snapshot(
+                sismolab,
+                "CHANGE_ASSOCIATION_LIMITS",
+                "Change W/R association limits",
+                state_before
+            )
+
+
+        response = DataAndMsgReturn()
+
+        response.ok = success
+        response.data = data
+
+
+        if success:
+
+            response.msg = message
+
+        else:
+
+            response.error = message
+
+
+        return response
+
+
+    # =========================================================
+    # CAMBIAR L + UNDO
+    # =========================================================
+
+    def update_access_limit(
+        self,
+        sismolab,
+        access_service,
+        access_limit
+    ):
+
+        state_before = (
+            self.capture_state(
+                sismolab
+            )
+        )
+
+
+        (
+            success,
+            message,
+            data
+        ) = (
+            access_service
+            .update_access_limit(
+                access_limit
+            )
+        )
+
+
+        if success:
+
+            self.push_snapshot(
+                sismolab,
+                "CHANGE_ACCESS_LIMIT",
+                "Change access limit L",
+                state_before
+            )
+
+
+        response = DataAndMsgReturn()
+
+        response.ok = success
+        response.data = data
+
+
+        if success:
+
+            response.msg = message
+
+        else:
+
+            response.error = message
+
+
+        return response

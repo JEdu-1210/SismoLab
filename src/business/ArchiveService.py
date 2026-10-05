@@ -1,5 +1,6 @@
-from business.AccessService import AccessService
-
+﻿from src.business.AccessService import AccessService
+from src.services.undo_service import UndoService
+from src.services.persistencia import PersistenceService
 
 class ArchiveService:
 
@@ -16,8 +17,10 @@ class ArchiveService:
             )
         )
 
+        self.undo_service = UndoService()
+
     # ELEGIR MEJOR CANDIDATO
-    # Busca automáticamente la mejor rama elegible.
+    # Busca automÃ¡ticamente la mejor rama elegible.
     # Retorna un diccionario con:
     # - root
     # - count
@@ -58,7 +61,7 @@ class ArchiveService:
         return best_candidate
 
 
-    # Recorre el árbol en postorden.
+    # Recorre el Ã¡rbol en postorden.
     # Retorna:
     # (
     #     subtree_is_eligible,
@@ -117,7 +120,7 @@ class ArchiveService:
         )
 
 
-        # El subárbol completo solamente es
+        # El subÃ¡rbol completo solamente es
         # elegible si TODOS sus Events cumplen.
         subtree_is_eligible = (
             event_is_eligible
@@ -141,8 +144,8 @@ class ArchiveService:
         )
 
 
-        # Si todo este subárbol es elegible,
-        # también lo evaluamos como candidato.
+        # Si todo este subÃ¡rbol es elegible,
+        # tambiÃ©n lo evaluamos como candidato.
         if subtree_is_eligible:
 
             candidate = {
@@ -168,11 +171,11 @@ class ArchiveService:
         )
 
 
-    # Decide cuál de dos candidatos gana.
+    # Decide cuÃ¡l de dos candidatos gana.
     # Prioridad:
     # 1. Mayor cantidad de nodos.
-    # 2. Mayor profundidad de la raíz.
-    # 3. Mayor identifier de la raíz.
+    # 2. Mayor profundidad de la raÃ­z.
+    # 3. Mayor identifier de la raÃ­z.
     def _better_candidate(
         self,
         candidate1,
@@ -205,7 +208,7 @@ class ArchiveService:
         return candidate1
 
 
-    # OBTENER EVENTS DEL SUBÁRBOL
+    # OBTENER EVENTS DEL SUBÃRBOL
 
     def _collect_events(
         self,
@@ -235,7 +238,7 @@ class ArchiveService:
 
     # VISTA PREVIA
 
-    # Prepara la información que la GUI mostrará
+    # Prepara la informaciÃ³n que la GUI mostrarÃ¡
     # antes de confirmar el archivo.
     def get_archive_preview(self):
 
@@ -313,7 +316,7 @@ class ArchiveService:
 
         # IMPORTANTE:
         # fijamos el conjunto ANTES de modificar
-        # cualquier árbol.
+        # cualquier Ã¡rbol.
         self._collect_events(
             root,
             events
@@ -334,7 +337,7 @@ class ArchiveService:
 
 
         # 1. Verificar primero que TODOS los Events
-        #    también existan en el BST.
+        #    tambiÃ©n existan en el BST.
 
         for event in events:
 
@@ -350,11 +353,18 @@ class ArchiveService:
                 )
 
 
-        # Aquí posteriormente registraremos
+        # AquÃ­ posteriormente registraremos
         # UN SOLO snapshot para Undo.
         # 2. Eliminar esos mismos Events del BST.
         # No archivamos una rama BST porque su
-        # topología puede ser distinta a la del AVL.
+        # topologÃ­a puede ser distinta a la del AVL.
+
+        state_before = (
+            self.undo_service
+            .capture_state(
+                self.sismolab
+            )
+        )
 
         for event in events:
 
@@ -364,6 +374,13 @@ class ArchiveService:
 
             if deleted_event is None:
 
+                # Como pudo haber eliminado Events anteriores
+                # del mismo for, restauramos el estado completo.
+                PersistenceService.apply_state(
+                    self.sismolab,
+                    state_before
+                )
+
                 return (
                     False,
                     "The branch could not be removed "
@@ -371,6 +388,7 @@ class ArchiveService:
                     None
                 )
 
+        avl_tree.clear_rotation_log()
 
         # 3. Desprender la rama COMPLETA del AVL.
         # Usamos rebalance=False para que primero
@@ -381,8 +399,12 @@ class ArchiveService:
             rebalance=False
         )
 
-
         if archived_root is None:
+
+            PersistenceService.apply_state(
+                self.sismolab,
+                state_before
+            )
 
             return (
                 False,
@@ -398,7 +420,7 @@ class ArchiveService:
             event.archive()
 
 
-        # 5. Guardar la raíz del subárbol
+        # 5. Guardar la raÃ­z del subÃ¡rbol
         #    dentro del History.
 
         history.add_archived_root(
@@ -407,7 +429,7 @@ class ArchiveService:
 
 
         # 6. Restaurar balance solamente en modo normal.
-        # En estrés NO realizamos rotaciones.
+        # En estrÃ©s NO realizamos rotaciones.
 
         if not scenario.is_stress_mode():
             avl_tree.recover_balance()
@@ -422,11 +444,34 @@ class ArchiveService:
         # - NO eliminamos sus asociaciones.
         # Siguen existiendo, pero como ARCHIVED.
 
-        # Aquí posteriormente actualizaremos:
-        # - métricas
+        # AquÃ­ posteriormente actualizaremos:
+        # - mÃ©tricas
         # - Undo
         # - GUI
+        metrics = (
+            self.sismolab
+            .get_metrics()
+        )
 
+        metrics.register_rotation_log(
+            avl_tree.get_rotation_log()
+        )
+        metrics.increment_mass_archives()
+
+        metrics.increment_archived_events(
+            len(events)
+        )
+
+        self.undo_service.push_snapshot(
+            self.sismolab,
+            "ARCHIVE_BRANCH",
+            (
+                f"Archive branch rooted at "
+                f"SIS-{candidate['root_id']:06d} "
+                f"with {len(events)} event(s)"
+            ),
+            state_before
+        )
 
         result = {
             "root_id": candidate["root_id"],

@@ -1,7 +1,7 @@
-from datetime import datetime
+﻿from datetime import datetime
 
-from models.Station import Station
-from models.Zone import Zone
+from src.models.Station import Station
+from src.models.Zone import Zone
 from math import isfinite
 
 class Scenario:
@@ -31,7 +31,7 @@ class Scenario:
         )
 
 
-        # Estos parámetros serán
+        # Estos parÃ¡metros serÃ¡n
         # trabajados en sus respectivos
         # puntos del proyecto.
         self.w_hours = float(
@@ -143,10 +143,10 @@ class Scenario:
 
         # Una zona puede compartir
         # borde o esquina con otra,
-        # pero no compartir área interior.
+        # pero no compartir Ã¡rea interior.
         # recorre todas las zonas existentes y verifica si la nueva zona se superpone con alguna de ellas.
-        #  Si encuentra una superposición, imprime un mensaje de error y retorna False.
-        #  Si no hay superposición, agrega la nueva zona a la lista de zonas del escenario y retorna True.
+        #  Si encuentra una superposiciÃ³n, imprime un mensaje de error y retorna False.
+        #  Si no hay superposiciÃ³n, agrega la nueva zona a la lista de zonas del escenario y retorna True.
         for current_zone in (
             self._zones
         ):
@@ -185,10 +185,10 @@ class Scenario:
     # Retorna todas las zonas que
     # contienen unas coordenadas.
     #
-    # Normalmente será una.
+    # Normalmente serÃ¡ una.
     #
-    # Puede haber más de una cuando
-    # el punto está sobre un borde
+    # Puede haber mÃ¡s de una cuando
+    # el punto estÃ¡ sobre un borde
     # compartido.
     def get_zones_containing_point(
         self,
@@ -221,7 +221,7 @@ class Scenario:
     # Determina si unas coordenadas
     # pertenecen a una zona poblada.
     #
-    # Si el punto pertenece a más
+    # Si el punto pertenece a mÃ¡s
     # de una zona por estar en un borde,
     # basta con que una sea poblada.
     def is_point_in_populated_zone(
@@ -273,8 +273,8 @@ class Scenario:
             return False
 
 
-        # Los nombres de estación serán
-        # únicos porque los utilizaremos
+        # Los nombres de estaciÃ³n serÃ¡n
+        # Ãºnicos porque los utilizaremos
         # para identificar la procedencia
         # de los reportes.
         for current_station in (
@@ -309,7 +309,7 @@ class Scenario:
             self._stations
         )
 
-    # Busca una estación utilizando su nombre.
+    # Busca una estaciÃ³n utilizando su nombre.
     def get_station_by_name(
         self,
         station_name
@@ -380,8 +380,8 @@ class Scenario:
     
     # SIMULATION CLOCK
     # Comprueba que el reloj sea
-    # un datetime válido en UTC
-    # y con precisión de segundos.
+    # un datetime vÃ¡lido en UTC
+    # y con precisiÃ³n de segundos.
     def _is_valid_clock(
         self,
         date_time
@@ -546,7 +546,7 @@ class Scenario:
 
 
     # Cambia W.
-    # Debe ser un número positivo y finito.
+    # Debe ser un nÃºmero positivo y finito.
     def set_w_hours(
         self,
         hours
@@ -565,14 +565,14 @@ class Scenario:
         return True
 
 
-    # Retorna R en kilómetros.
+    # Retorna R en kilÃ³metros.
     def get_r_km(self):
 
         return self.r_km
 
 
     # Cambia R.
-    # Debe ser un número positivo y finito.
+    # Debe ser un nÃºmero positivo y finito.
     def set_r_km(
         self,
         km
@@ -591,12 +591,12 @@ class Scenario:
         return True
 
     # ACCESS LIMIT
-    # Retorna el límite L.
+    # Retorna el lÃ­mite L.
     def get_access_limit(self):
 
         return self.access_limit
 
-    # Cambia el límite L.
+    # Cambia el lÃ­mite L.
     # Debe ser un entero no negativo.
     def set_access_limit(
         self,

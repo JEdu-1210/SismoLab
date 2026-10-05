@@ -1,13 +1,13 @@
-from models.Scenario import Scenario
-from models.History import History
-from models.Metrics import Metrics
-from models.Version import Version
-from models.Association import Association
+﻿from src.models.Scenario import Scenario
+from src.models.History import History
+from src.models.Metrics import Metrics
+from src.models.Version import Version
+from src.models.Association import Association
 
-from structures.AVLTree import AVLTree
-from structures.BSTTree import BSTTree
-from structures.ReportQueue import ReportQueue
-from structures.Stack import Stack
+from src.structures.AVLTree import AVLTree
+from src.structures.BSTTree import BSTTree
+from src.structures.ReportQueue import ReportQueue
+from src.structures.Stack import Stack
 
 
 class SismoLab:
@@ -21,17 +21,17 @@ class SismoLab:
         self._scenario = scenario
 
 
-        # Árbol principal de eventos activos.
+        # Ãrbol principal de eventos activos.
         self._avl_tree = AVLTree()
 
 
-        # Árbol utilizado para comparación estructural
+        # Ãrbol utilizado para comparaciÃ³n estructural
         # con el AVL.
         self._bst_tree = BSTTree()
 
 
-        # Histórico que conserva las raíces
-        # de los subárboles archivados.
+        # HistÃ³rico que conserva las raÃ­ces
+        # de los subÃ¡rboles archivados.
         self._history = History()
 
 
@@ -130,7 +130,7 @@ class SismoLab:
         )
 
 
-    # Agrega una nueva versión.
+    # Agrega una nueva versiÃ³n.
     def add_version(
         self,
         version: Version
@@ -141,7 +141,7 @@ class SismoLab:
         )
 
 
-    # Busca una versión por nombre.
+    # Busca una versiÃ³n por nombre.
     def get_version_by_name(
         self,
         name
@@ -157,7 +157,7 @@ class SismoLab:
         return None
 
 
-    # Elimina una versión almacenada.
+    # Elimina una versiÃ³n almacenada.
     def remove_version(
         self,
         version: Version
@@ -185,7 +185,7 @@ class SismoLab:
         )
 
 
-    # Agrega una asociación.
+    # Agrega una asociaciÃ³n.
     def add_association(
         self,
         association: Association
@@ -196,7 +196,7 @@ class SismoLab:
         )
 
 
-    # Elimina una asociación.
+    # Elimina una asociaciÃ³n.
     def remove_association(
         self,
         association: Association
@@ -214,7 +214,7 @@ class SismoLab:
 
         return True
 
-    # Elimina todas las asociaciones actuales. Se utilizará cuando sea necesario
+    # Elimina todas las asociaciones actuales. Se utilizarÃ¡ cuando sea necesario
     # recalcularlas completamente.
     def clear_associations(self):
 
@@ -235,7 +235,7 @@ class SismoLab:
 
     # Elimina el ID del conjunto de retirados.
     #
-    # Será útil al restaurar un estado anterior.
+    # SerÃ¡ Ãºtil al restaurar un estado anterior.
     def remove_retired_id(
         self,
         identifier

@@ -1,16 +1,16 @@
-from structures.AVLNode import AVLNode
-from structures.AVLTree import AVLTree
+﻿from src.structures.AVLNode import AVLNode
+from src.structures.AVLTree import AVLTree
 
 class History:
 
     def __init__(self):
 
-        # Cada elemento de esta lista es la raíz
-        # de un subárbol AVL archivado.
+        # Cada elemento de esta lista es la raÃ­z
+        # de un subÃ¡rbol AVL archivado.
         self._archived_roots = []
 
 
-    # Retorna una copia de la lista de raíces archivadas.
+    # Retorna una copia de la lista de raÃ­ces archivadas.
     #
     # La copia evita que otra clase modifique directamente
     # nuestra lista interna.
@@ -21,7 +21,7 @@ class History:
         )
 
 
-    # Retorna True si no existen subárboles archivados.
+    # Retorna True si no existen subÃ¡rboles archivados.
     def is_empty(self):
 
         if len(self._archived_roots) == 0:
@@ -30,7 +30,7 @@ class History:
         return False
 
 
-    # Recibe la raíz de un subárbol previamente
+    # Recibe la raÃ­z de un subÃ¡rbol previamente
     # separado del AVL activo y la guarda.
     def add_archived_root(
         self,
@@ -41,7 +41,7 @@ class History:
             return False
 
 
-        # Una raíz archivada no debe tener padre.
+        # Una raÃ­z archivada no debe tener padre.
         root.set_parent(None)
 
 
@@ -53,9 +53,9 @@ class History:
         return True
 
 
-    # Elimina una raíz archivada de la colección.
+    # Elimina una raÃ­z archivada de la colecciÃ³n.
     #
-    # Esto NO elimina los nodos de ese subárbol.
+    # Esto NO elimina los nodos de ese subÃ¡rbol.
     # Solamente deja de estar almacenado por History.
     def remove_archived_root(
         self,
@@ -78,8 +78,8 @@ class History:
     # Busca un nodo archivado utilizando solamente
     # el identificador del Event.
     #
-    # Como la llave del árbol es (P, M, I),
-    # debemos recorrer los subárboles.
+    # Como la llave del Ã¡rbol es (P, M, I),
+    # debemos recorrer los subÃ¡rboles.
     def search_by_id(
         self,
         identifier
@@ -103,7 +103,7 @@ class History:
         return None
 
 
-    # Método recursivo utilizado por search_by_id().
+    # MÃ©todo recursivo utilizado por search_by_id().
     def _search_by_id(
         self,
         identifier,
@@ -123,7 +123,7 @@ class History:
             return current_node
 
 
-        # Buscar primero en el subárbol izquierdo.
+        # Buscar primero en el subÃ¡rbol izquierdo.
         found_node = self._search_by_id(
             identifier,
             current_node.get_left()
@@ -135,14 +135,14 @@ class History:
             return found_node
 
 
-        # Si no apareció, buscar en el derecho.
+        # Si no apareciÃ³, buscar en el derecho.
         return self._search_by_id(
             identifier,
             current_node.get_right()
         )
 
-    # Extrae un solo Event del histórico.
-    # Los demás Events archivados permanecen dentro de History.
+    # Extrae un solo Event del histÃ³rico.
+    # Los demÃ¡s Events archivados permanecen dentro de History.
     def extract_event_by_id(
         self,
         identifier
@@ -166,7 +166,7 @@ class History:
 
 
             # Utilizamos temporalmente un AVLTree
-            # para poder reutilizar su eliminación.
+            # para poder reutilizar su eliminaciÃ³n.
             temporary_tree = AVLTree()
 
             temporary_tree.set_root(
@@ -187,8 +187,8 @@ class History:
             new_root = temporary_tree.get_root()
 
 
-            # Si era el único nodo de esa rama,
-            # desaparece esa raíz del History.
+            # Si era el Ãºnico nodo de esa rama,
+            # desaparece esa raÃ­z del History.
             if new_root is None:
 
                 self._archived_roots.pop(
@@ -197,7 +197,7 @@ class History:
 
 
             # Si quedaron nodos archivados,
-            # guardamos la nueva raíz resultante.
+            # guardamos la nueva raÃ­z resultante.
             else:
 
                 new_root.set_parent(None)

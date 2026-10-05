@@ -1,5 +1,5 @@
-from models.Event import Event
-from models.Station import Station
+﻿from src.models.Event import Event
+from src.models.Station import Station
 
 class Report:
 
@@ -30,7 +30,7 @@ class Report:
         self.date_time = date_time
 
         # Puede ser None mientras el reporte
-        # todavía no haya sido procesado.
+        # todavÃ­a no haya sido procesado.
         self.event = event
 
         self.decision = None
@@ -53,14 +53,14 @@ class Report:
         return {
             "identifier": self.identifier,
             "revision": self.revision,
-            # Se convierte la estación a diccionario
+            # Se convierte la estaciÃ³n a diccionario
             "station": self.station.to_dict() if hasattr(self.station, "to_dict") else self.station,
             "magnitude": self.magnitude,
             "depth": self.depth,
             "x": self.x,
             "y": self.y,
             "date_time": self.date_time.isoformat() if hasattr(self.date_time, "isoformat") else str(self.date_time),
-            # Se incluyen el evento asociado y la decisión tomada
+            # Se incluyen el evento asociado y la decisiÃ³n tomada
             "event": self.event.to_dict() if self.event and hasattr(self.event, "to_dict") else None,
             "decision": self.decision
         }

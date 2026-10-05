@@ -1,4 +1,4 @@
-from io import TextIOWrapper
+﻿from io import TextIOWrapper
 from pathlib import Path
 import json
 from typing import Any
@@ -68,18 +68,34 @@ class FilesUtils:
         return __response
 
     @staticmethod
-    def write_json(filename, data: dict) -> BaseReturn:
-        __response: BaseReturn = BaseReturn()
-        file = FilesUtils.open_file(filename, 'w')
+    def write_json(
+        filename,
+        data: dict
+    ) -> BaseReturn:
 
-        if file:
-            try:
-                json.dump(data, file, indent=2, sort_keys=True, ensure_ascii=False)
-            except Exception as e:
-                __response.ok = False
-                __response.error = e.__str__()
-        else:
-            __response.ok = False
-            __response.error = 'Something happend trying write the JSON file'
+        response = BaseReturn()
 
-        return __response
+
+        try:
+
+            with FilesUtils.open_file(
+                filename,
+                "w"
+            ) as file:
+
+                json.dump(
+                    data,
+                    file,
+                    indent=2,
+                    sort_keys=True,
+                    ensure_ascii=False
+                )
+
+
+        except Exception as exc:
+
+            response.ok = False
+            response.error = str(exc)
+
+
+        return response

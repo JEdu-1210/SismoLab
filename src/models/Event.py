@@ -1,7 +1,7 @@
-from datetime import datetime
+﻿from datetime import datetime
 from math import isfinite
 
-from models.Status import (
+from src.models.Status import (
     AttentionStatus,
     CatalogStatus
 )
@@ -71,7 +71,7 @@ class Event:
         )
 
 
-    # Agrega una estación al conjunto de estaciones
+    # Agrega una estaciÃ³n al conjunto de estaciones
     # que han enviado reportes aceptados.
     def add_accepted_station(
         self,
@@ -104,7 +104,7 @@ class Event:
 
     # Devuelve el evento al estado pendiente.
     #
-    # Esto se utilizará cuando una corrección
+    # Esto se utilizarÃ¡ cuando una correcciÃ³n
     # sea aceptada.
     def mark_as_pending(self):
 
@@ -123,7 +123,7 @@ class Event:
 
     # Marca el evento como activo.
     #
-    # Será útil cuando un evento archivado
+    # SerÃ¡ Ãºtil cuando un evento archivado
     # sea reactivado.
     def activate(self):
 
@@ -143,8 +143,8 @@ class Event:
         )
 
 
-    # Verifica que un número tenga
-    # como máximo un decimal.
+    # Verifica que un nÃºmero tenga
+    # como mÃ¡ximo un decimal.
     def _has_max_one_decimal(
         self,
         value
@@ -160,12 +160,12 @@ class Event:
         )
 
 
-    # Valida únicamente reglas que dependen
+    # Valida Ãºnicamente reglas que dependen
     # de los atributos propios del evento.
     #
-    # Las reglas que necesitan información
+    # Las reglas que necesitan informaciÃ³n
     # del escenario o de otras estructuras
-    # se validarán desde negocio.
+    # se validarÃ¡n desde negocio.
     def validateAttributes(self):
 
         # Identificador:
@@ -187,7 +187,7 @@ class Event:
 
 
         # Magnitud:
-        # debe ser un número finito.
+        # debe ser un nÃºmero finito.
         if not isfinite(
             self.magnitude
         ):
@@ -219,7 +219,7 @@ class Event:
 
 
         # Magnitud:
-        # máximo un decimal.
+        # mÃ¡ximo un decimal.
         if not self._has_max_one_decimal(
             self.magnitude
         ):
@@ -233,7 +233,7 @@ class Event:
 
 
         # Profundidad del hipocentro:
-        # debe ser un número finito.
+        # debe ser un nÃºmero finito.
         if not isfinite(
             self.depth
         ):
@@ -265,7 +265,7 @@ class Event:
 
 
         # Profundidad:
-        # máximo un decimal.
+        # mÃ¡ximo un decimal.
         if not self._has_max_one_decimal(
             self.depth
         ):
@@ -279,7 +279,7 @@ class Event:
 
 
         # Coordenada X:
-        # debe ser un número finito.
+        # debe ser un nÃºmero finito.
         if not isfinite(
             self.x
         ):
@@ -311,7 +311,7 @@ class Event:
 
 
         # Coordenada X:
-        # máximo un decimal.
+        # mÃ¡ximo un decimal.
         if not self._has_max_one_decimal(
             self.x
         ):
@@ -325,7 +325,7 @@ class Event:
 
 
         # Coordenada Y:
-        # debe ser un número finito.
+        # debe ser un nÃºmero finito.
         if not isfinite(
             self.y
         ):
@@ -357,7 +357,7 @@ class Event:
 
 
         # Coordenada Y:
-        # máximo un decimal.
+        # mÃ¡ximo un decimal.
         if not self._has_max_one_decimal(
             self.y
         ):
@@ -387,7 +387,7 @@ class Event:
             return False
 
 
-        # El proyecto trabaja con precisión
+        # El proyecto trabaja con precisiÃ³n
         # de segundos.
         #
         # Por eso no se permiten microsegundos.
@@ -405,7 +405,7 @@ class Event:
 
 
         # La fecha debe contener
-        # información de zona horaria.
+        # informaciÃ³n de zona horaria.
         if (
             self.date_time.tzinfo is None
             or
@@ -436,7 +436,7 @@ class Event:
             return False
 
 
-        # La revisión debe ser
+        # La revisiÃ³n debe ser
         # un entero positivo.
         if self.revision <= 0:
 
@@ -449,7 +449,7 @@ class Event:
             return False
 
 
-        # La prioridad válida dentro
+        # La prioridad vÃ¡lida dentro
         # del sistema solo puede ser:
         #
         # 1 = Baja
@@ -458,7 +458,7 @@ class Event:
         #
         # Event NO calcula la prioridad.
         # Solamente verifica que el valor
-        # recibido sea válido.
+        # recibido sea vÃ¡lido.
         if self.priority not in (
             1,
             2,
@@ -489,7 +489,7 @@ class Event:
             return False
 
 
-        # El estado de atención debe ser
+        # El estado de atenciÃ³n debe ser
         # uno de los definidos en Status.py.
         if not isinstance(
             self.attention_status,
@@ -504,7 +504,7 @@ class Event:
             return False
 
 
-        # El estado del catálogo debe ser
+        # El estado del catÃ¡logo debe ser
         # uno de los definidos en Status.py.
         if not isinstance(
             self.catalog_status,
@@ -534,7 +534,7 @@ class Event:
             return False
 
 
-        # Cada estación aceptada debe
+        # Cada estaciÃ³n aceptada debe
         # estar representada por su nombre.
         for station_name in (
             self.accepted_stations
@@ -562,9 +562,9 @@ class Event:
                 return False
 
 
-        # Si llegó hasta aquí,
+        # Si llegÃ³ hasta aquÃ­,
         # todos sus atributos propios
-        # son válidos.
+        # son vÃ¡lidos.
         return True
 
 
@@ -581,7 +581,7 @@ class Event:
 
     # Convierte el evento a un diccionario.
     #
-    # Será utilizado posteriormente
+    # SerÃ¡ utilizado posteriormente
     # para JSON, versiones y persistencia.
     def to_dict(self):
 

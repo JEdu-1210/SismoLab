@@ -1,4 +1,4 @@
-from models.UndoAction import UndoAction
+﻿from src.models.UndoAction import UndoAction
 
 
 class Stack:
@@ -8,7 +8,7 @@ class Stack:
         self._actions = []
 
 
-    # Agrega una acción en la parte superior de la pila.
+    # Agrega una acciÃ³n en la parte superior de la pila.
     def push(
         self,
         action: UndoAction
@@ -19,7 +19,7 @@ class Stack:
         )
 
 
-    # Retira y retorna la última acción agregada.
+    # Retira y retorna la Ãºltima acciÃ³n agregada.
     def pop(self):
 
         if self.is_empty():
@@ -30,7 +30,7 @@ class Stack:
         return self._actions.pop()
 
 
-    # Retorna la acción superior sin eliminarla.
+    # Retorna la acciÃ³n superior sin eliminarla.
     def peek(self):
 
         if self.is_empty():
@@ -59,8 +59,18 @@ class Stack:
             self._actions
         )
 
+    # Retorna una copia de las acciones
+    # almacenadas en la pila.
+    #
+    # La Ãºltima posiciÃ³n corresponde
+    # a la acciÃ³n que se desharÃ¡ primero.
+    def get_actions(self):
 
-    # Vacía completamente la pila.
+        return list(
+            self._actions
+        )
+    
+    # VacÃ­a completamente la pila.
     def clear(self):
 
         self._actions.clear()

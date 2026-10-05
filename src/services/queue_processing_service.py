@@ -1,333 +1,876 @@
-from typing import Any, Dict, List, Optional, Tuple
-from src.models.Event import Event
+﻿from time import sleep
+
+from src.business.AccessService import AccessService
+from src.business.ReportService import ReportService
+
 from src.models.Report import Report
 from src.models.Returnings import DataAndMsgReturn
-from src.services.audit_service import AuditService
 
+from src.services.audit_service import AuditService
+from src.services.undo_service import UndoService
+from src.services.persistencia import PersistenceService
 
 class QueueProcessingService:
-    """
-    Servicio encargado de procesar la cola FIFO de reportes en ráfaga (Punto 8)
-    y ejecutar la recuperación global in-place en Modo Estrés.
-    """
 
-    # -------------------------------------------------------------------------
-    # 1. PROCESAR SIGUIENTE REPORTE DE LA COLA (Paso a paso)
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def process_next_report(sismolab: Any) -> DataAndMsgReturn:
-        response = DataAndMsgReturn()
-        report_queue = sismolab.get_report_queue()
+    def __init__(
+        self,
+        sismolab,
+        undo_service=None
+    ):
 
-        if report_queue.is_empty():
-            response.error = "La cola de reportes está vacía."
-            return response
+        self.sismolab = sismolab
 
-        # Registrar foto en Undo antes de realizar cambios
-        QueueProcessingService._record_undo(sismolab, "PROCESS_REPORT", "Procesamiento de reporte desde la cola FIFO")
-
-        report: Report = report_queue.dequeue()
-        scenario = sismolab.get_scenario()
-        is_stress = scenario.is_stress_mode() if hasattr(scenario, "is_stress_mode") else getattr(scenario, "stress_mode", False)
-        metrics = sismolab.get_metrics()
-        avl_tree = sismolab.get_avl_tree()
-
-        # Validar si el identificador pertenece a un evento eliminado/retirado
-        if sismolab.is_retired_id(report.identifier):
-            report.decision = "DESCARTADO_EVENTO_ELIMINADO"
-            if hasattr(metrics, "increment_discarded_reports"):
-                metrics.increment_discarded_reports()
-            response.msg = f"Reporte para ID {report.identifier} descartado: el evento fue ELIMINADO."
-            response.data = {"report": report.to_dict(), "decision": report.decision}
-            return response
-
-        # Buscar si el evento ya existe en el árbol activo AVL
-        existing_node = avl_tree.search_by_id(report.identifier) if hasattr(avl_tree, "search_by_id") else None
-        existing_event = (existing_node.get_event() if hasattr(existing_node, "get_event") else existing_node.event) if existing_node else None
-
-        rotations_made = []
-        decision = ""
-
-        if existing_event is None:
-            # -----------------------------------------------------------------
-            # SITUACIÓN: Identificador desconocido -> Crear nuevo evento
-            # -----------------------------------------------------------------
-            new_event = Event(
-                identifier=report.identifier,
-                magnitude=report.magnitude,
-                depth=report.depth,
-                x=report.x,
-                y=report.y,
-                date_time=report.date_time,
-                revision=report.revision,
-                priority=1,
-                is_populated_zone=False
+        # ReportService contiene TODAS las reglas
+        # del punto 6.
+        self.report_service = (
+            ReportService(
+                sismolab
             )
-            
-            # Actualizar zona poblada y prioridad P según escenario
-            zones = scenario.get_zones() if hasattr(scenario, "get_zones") else getattr(scenario, "zones", [])
-            new_event.update_zone_and_priority(zones)
-            station_name = report.station.name if hasattr(report.station, "name") else str(report.station)
-            new_event.add_accepted_station(station_name)
+        )
 
-            if is_stress:
-                # En Modo Estrés: Inserción estilo BST simple (sin rotaciones)
-                QueueProcessingService._insert_bst_unbalanced(avl_tree, new_event)
-                decision = f"NUEVO EVENTO CREADO (Modo Estrés - Rotaciones Aplazadas) [ID {new_event.identifier}]"
-            else:
-                # En Modo Normal: Inserción AVL con balanceo
-                rotations_made = avl_tree.insert(new_event)
-                decision = f"NUEVO EVENTO CREADO E INSERTADO EN AVL [ID {new_event.identifier}]"
+        self.access_service = (
+            AccessService(
+                sismolab
+            )
+        )
 
-            report.event = new_event
-            report.decision = "ACEPTADO_NUEVO_EVENTO"
+        # Cuando terminemos el punto 13
+        # pasaremos aquÃ­ el UndoService corregido.
+        self.undo_service = (
+            undo_service
+            if undo_service is not None
+            else UndoService()
+        )
 
-        else:
-            # -----------------------------------------------------------------
-            # SITUACIÓN: Identificador conocido -> Evaluación de revisiones y datos
-            # -----------------------------------------------------------------
-            current_rev = existing_event.revision
-            rep_rev = report.revision
 
-            if rep_rev < current_rev:
-                # Revisión menor que la vigente -> Descartar por antiguo
-                decision = f"REPORTE DESCARTADO (Antiguo): Rev. {rep_rev} < Rev. vigente {current_rev}"
-                report.decision = "DESCARTADO_REVISION_ANTIGUA"
-                if hasattr(metrics, "increment_discarded_reports"):
-                    metrics.increment_discarded_reports()
+    # =========================================================
+    # PREPARAR RÃFAGA
+    # =========================================================
 
-            elif rep_rev == current_rev:
-                # Comparación de datos del sismo
-                same_data = (
-                    existing_event.magnitude == report.magnitude and
-                    existing_event.depth == report.depth and
-                    existing_event.x == report.x and
-                    existing_event.y == report.y and
-                    str(existing_event.date_time) == str(report.date_time)
+    # Agrega N reportes sin procesarlos.
+    #
+    # Todos se validan primero para evitar
+    # agregar solamente una parte de la rÃ¡faga.
+    def enqueue_burst(
+        self,
+        reports
+    ):
+
+        response = DataAndMsgReturn()
+
+
+        if (
+            not isinstance(
+                reports,
+                (list, tuple)
+            )
+            or
+            len(reports) == 0
+        ):
+
+            response.ok = False
+            response.error = (
+                "A burst must contain "
+                "at least one report"
+            )
+
+            return response
+
+
+        # Validar TODA la rÃ¡faga primero.
+        for report in reports:
+
+            if not isinstance(
+                report,
+                Report
+            ):
+
+                response.ok = False
+                response.error = (
+                    "All burst elements "
+                    "must be Report objects"
                 )
 
-                if same_data:
-                    # Igual revisión e iguales datos -> Confirmación y añadir estación
-                    station_name = report.station.name if hasattr(report.station, "name") else str(report.station)
-                    existing_event.add_accepted_station(station_name)
-                    decision = f"CONFIRMACIÓN ACEPTADA: Estación '{station_name}' añadida al evento {existing_event.identifier}"
-                    report.decision = "CONFIRMACION_ACEPTADA"
-                else:
-                    # Igual revisión y datos distintos -> Conflicto detectado
-                    decision = f"CONFLICTO DETECTADO: Rev. {rep_rev} coincide pero los datos difieren. Reporte rechazado."
-                    report.decision = "CONFLICTO_RECHAZADO"
-                    if hasattr(metrics, "increment_conflicts"):
-                        metrics.increment_conflicts()
+                return response
 
-            else:
-                # Revisión mayor que la vigente -> Sustituir datos
-                old_key = existing_event.get_key()
 
-                existing_event.magnitude = report.magnitude
-                existing_event.depth = report.depth
-                existing_event.x = report.x
-                existing_event.y = report.y
-                existing_event.date_time = report.date_time
-                existing_event.revision = rep_rev
-                existing_event.mark_as_pending()
+        report_queue = (
+            self.sismolab
+            .get_report_queue()
+        )
 
-                zones = scenario.get_zones() if hasattr(scenario, "get_zones") else getattr(scenario, "zones", [])
-                existing_event.update_zone_and_priority(zones)
-                station_name = report.station.name if hasattr(report.station, "name") else str(report.station)
-                existing_event.add_accepted_station(station_name)
 
-                new_key = existing_event.get_key()
+        # Ahora sÃ­ se agregan todos,
+        # conservando exactamente su orden.
+        for report in reports:
 
-                # Si cambió la clave K = (P, M, I), se reubica el nodo
-                if old_key != new_key:
-                    avl_tree.delete_by_key(old_key)
-                    if is_stress:
-                        QueueProcessingService._insert_bst_unbalanced(avl_tree, existing_event)
-                    else:
-                        rotations_made = avl_tree.insert(existing_event)
-                    decision = f"CORRECCIÓN ACEPTADA: Clave reubicada {old_key} -> {new_key}"
-                else:
-                    decision = f"CORRECCIÓN ACEPTADA: Datos actualizados sin cambio de clave [ID {existing_event.identifier}]"
+            report_queue.enqueue(
+                report
+            )
 
-                report.event = existing_event
-                report.decision = "CORRECCION_ACEPTADA"
-                if hasattr(metrics, "increment_accepted_corrections"):
-                    metrics.increment_accepted_corrections()
 
         response.data = {
-            "station": report.station.name if hasattr(report.station, "name") else str(report.station),
-            "event_id": report.identifier,
-            "revision": report.revision,
-            "decision": decision,
-            "rotations": rotations_made,
-            "is_stress_mode": is_stress
+            "added": len(reports),
+
+            "queue_size":
+                report_queue.size(),
+
+            "queue":
+                self.get_queue_view()
         }
-        response.msg = f"Paso completado: {decision}"
+
+
+        response.msg = (
+            "Report burst added "
+            "to FIFO queue"
+        )
+
+
         return response
 
-    # -------------------------------------------------------------------------
-    # 2. RECUPERACIÓN GLOBAL DEL AVL (Re-balanceo In-Place)
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def recover_avl_balance(sismolab: Any) -> DataAndMsgReturn:
-        response = DataAndMsgReturn()
-        avl_tree = sismolab.get_avl_tree()
 
-        if avl_tree.root is None:
-            response.msg = "El árbol está vacío. No requiere re-balanceo."
+    # =========================================================
+    # VISUALIZAR COLA
+    # =========================================================
+
+    # Prepara el contenido para que posteriormente
+    # la GUI pueda mostrar el orden FIFO.
+    def get_queue_view(self):
+
+        result = []
+
+
+        reports = (
+            self.sismolab
+            .get_report_queue()
+            .get_reports()
+        )
+
+
+        for position, report in enumerate(
+            reports,
+            start=1
+        ):
+
+            result.append({
+                "position": position,
+
+                "station":
+                    self._station_name(
+                        report
+                    ),
+
+                "event_id":
+                    report.identifier,
+
+                "revision":
+                    report.revision,
+
+                "decision":
+                    report.decision
+            })
+
+
+        return result
+
+
+    # =========================================================
+    # PROCESAR UN REPORTE
+    # =========================================================
+
+    # Ejecuta exactamente UN paso FIFO.
+    def process_next_report(self):
+
+        response = DataAndMsgReturn()
+
+        report_queue = (
+            self.sismolab
+            .get_report_queue()
+        )
+
+
+        if report_queue.is_empty():
+
+            response.ok = False
+            response.error = (
+                "The report queue is empty"
+            )
+
             return response
 
-        total_rotations = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
-        metrics = sismolab.get_metrics()
 
-        loop_count = 0
-        max_loops = 100
+        state_before = (
+            self.undo_service
+            .capture_state(
+                self.sismolab
+            )
+        )
 
-        while loop_count < max_loops:
-            unbalanced_found, pass_summary = QueueProcessingService._rebalance_pass(avl_tree)
-            
-            for case_type in pass_summary.get("cases", []):
-                if case_type in total_rotations:
-                    total_rotations[case_type] += 1
-                if hasattr(metrics, "register_rotation"):
-                    metrics.register_rotation(case_type)
+        avl_tree = (
+            self.sismolab
+            .get_avl_tree()
+        )
 
-            if not unbalanced_found:
-                break
-            loop_count += 1
 
-        # Auditoría previa para confirmar equilibrio total
-        audit_res = AuditService.verify_structure(sismolab)
-        
-        if audit_res.data.get("is_valid", False):
-            scenario = sismolab.get_scenario()
-            if hasattr(scenario, "set_stress_mode"):
-                scenario.set_stress_mode(False)
-            elif hasattr(scenario, "stress_mode"):
-                scenario.stress_mode = False
+        # Queremos saber solamente las
+        # rotaciones de ESTE reporte.
+        avl_tree.clear_rotation_log()
 
-            response.data = {
-                "recovery_completed": True,
-                "passes_required": loop_count + 1,
-                "total_rotations": total_rotations
-            }
-            response.msg = "Recuperación global exitosa. Árbol equilibrado y Modo Normal activado."
-        else:
-            response.error = "Error en la recuperación: La auditoría detectó desbalance o inconsistencias de orden restantes."
-            response.data = audit_res.data
+
+        # FIFO:
+        # se procesa exactamente el primero.
+        report = report_queue.dequeue()
+
+
+        try:
+
+            (
+                success,
+                message,
+                processed_report
+            ) = (
+                self.report_service
+                .process_report(
+                    report
+                )
+            )
+
+
+        except Exception as exc:
+
+            PersistenceService.apply_state(
+                self.sismolab,
+                state_before
+            )
+
+            response.ok = False
+            response.error = str(exc)
+
+            return response
+
+
+        if not success:
+
+            PersistenceService.apply_state(
+                self.sismolab,
+                state_before
+            )
+
+            response.ok = False
+            response.error = message
+
+            return response
+
+
+        rotations = (
+            avl_tree.get_rotation_log()
+        )
+
+
+        # Actualizar contadores LL/RR/LR/RL
+        # y giros elementales.
+        self._register_rotation_metrics(
+            rotations
+        )
+
+        self.undo_service.push_snapshot(
+            self.sismolab,
+            "PROCESS_REPORT",
+            (
+                f"Process report for "
+                f"SIS-{processed_report.identifier:06d} "
+                f"revision "
+                f"{processed_report.revision}"
+            ),
+            state_before
+        )
+
+        if processed_report is None:
+
+            processed_report = report
+
+
+        scenario = (
+            self.sismolab
+            .get_scenario()
+        )
+
+
+        response.data = {
+
+            "station":
+                self._station_name(
+                    processed_report
+                ),
+
+            "event_id":
+                processed_report.identifier,
+
+            "revision":
+                processed_report.revision,
+
+            "decision":
+                processed_report.decision,
+
+            "message":
+                message,
+
+            # Casos y giros exactos producidos
+            # durante este paso.
+            "rotations":
+                rotations,
+
+            "rotation_count":
+                len([
+                    rotation
+                    for rotation in rotations
+                    if rotation.get("kind")
+                    == "rotation"
+                ]),
+
+            "stress_mode":
+                scenario.is_stress_mode(),
+
+            "remaining_reports":
+                report_queue.size()
+        }
+
+
+        response.msg = (
+            "Report processed successfully"
+        )
+
 
         return response
 
-    # -------------------------------------------------------------------------
-    # MÉTODOS AUXILIARES ESTRUCTURALES Y UNDO
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def _insert_bst_unbalanced(tree: Any, event: Event) -> None:
-        """Inserta conservando el orden de K pero sin aplicar rotaciones AVL."""
-        from src.structures.AVLNode import AVLNode
-        new_node = AVLNode(event=event)
 
-        if tree.root is None:
-            tree.root = new_node
-            return
+    # =========================================================
+    # PROCESAMIENTO CONTINUO
+    # =========================================================
 
-        curr = tree.root
-        target_key = event.get_key()
+    # Procesa reportes uno por uno,
+    # manteniendo una pausa entre pasos.
+    #
+    # max_steps es Ãºtil para pruebas.
+    def process_continuous(
+        self,
+        pause_seconds=0.5,
+        max_steps=None
+    ):
 
-        while True:
-            curr_event = curr.get_event() if hasattr(curr, "get_event") else curr.event
-            curr_key = curr_event.get_key()
+        response = DataAndMsgReturn()
 
-            if target_key < curr_key:
-                left = curr.left if hasattr(curr, "left") else getattr(curr, "get_left")()
-                if left is None:
-                    if hasattr(curr, "set_left"): curr.set_left(new_node)
-                    else: curr.left = new_node
-                    break
-                curr = left
-            else:
-                right = curr.right if hasattr(curr, "right") else getattr(curr, "get_right")()
-                if right is None:
-                    if hasattr(curr, "set_right"): curr.set_right(new_node)
-                    else: curr.right = new_node
-                    break
-                curr = right
 
-        QueueProcessingService._update_heights(tree.root)
+        try:
+            pause_seconds = float(
+                pause_seconds
+            )
 
-    @staticmethod
-    def _rebalance_pass(tree: Any) -> Tuple[bool, dict]:
-        """Recorre el árbol en Post-Order aplicando rotaciones AVL locales donde |FB| > 1."""
-        rotations_summary = {"cases": []}
-        unbalanced_node_found = [False]
+        except (
+            TypeError,
+            ValueError
+        ):
 
-        def _post_order_rebalance(node):
-            if node is None:
-                return None
+            response.ok = False
 
-            left = node.left if hasattr(node, "left") else getattr(node, "get_left", lambda: None)()
-            right = node.right if hasattr(node, "right") else getattr(node, "get_right", lambda: None)()
+            response.error = (
+                "pause_seconds "
+                "must be numeric"
+            )
 
-            new_left = _post_order_rebalance(left)
-            new_right = _post_order_rebalance(right)
+            return response
 
-            if hasattr(node, "set_left"): node.set_left(new_left)
-            else: node.left = new_left
 
-            if hasattr(node, "set_right"): node.set_right(new_right)
-            else: node.right = new_right
+        if pause_seconds < 0:
 
-            h_left = AuditService.calculate_node_height(new_left)
-            h_right = AuditService.calculate_node_height(new_right)
-            node.height = 1 + max(h_left, h_right)
+            response.ok = False
+            response.error = (
+                "pause_seconds "
+                "cannot be negative"
+            )
 
-            fb = h_left - h_right
+            return response
 
-            if fb > 1:
-                unbalanced_node_found[0] = True
-                left_sub = new_left.left if hasattr(new_left, "left") else getattr(new_left, "get_left", lambda: None)()
-                right_sub = new_left.right if hasattr(new_left, "right") else getattr(new_left, "get_right", lambda: None)()
-                left_fb = AuditService.calculate_node_height(left_sub) - AuditService.calculate_node_height(right_sub)
 
-                if left_fb >= 0:
-                    rotations_summary["cases"].append("LL")
-                    return tree.rotate_right(node) if hasattr(tree, "rotate_right") else node
-                else:
-                    rotations_summary["cases"].append("LR")
-                    return tree.rotate_left_right(node) if hasattr(tree, "rotate_left_right") else node
+        if max_steps is not None:
 
-            elif fb < -1:
-                unbalanced_node_found[0] = True
-                left_sub = new_right.left if hasattr(new_right, "left") else getattr(new_right, "get_left", lambda: None)()
-                right_sub = new_right.right if hasattr(new_right, "right") else getattr(new_right, "get_right", lambda: None)()
-                right_fb = AuditService.calculate_node_height(left_sub) - AuditService.calculate_node_height(right_sub)
+            if (
+                isinstance(
+                    max_steps,
+                    bool
+                )
+                or
+                not isinstance(
+                    max_steps,
+                    int
+                )
+                or
+                max_steps <= 0
+            ):
 
-                if right_fb <= 0:
-                    rotations_summary["cases"].append("RR")
-                    return tree.rotate_left(node) if hasattr(tree, "rotate_left") else node
-                else:
-                    rotations_summary["cases"].append("RL")
-                    return tree.rotate_right_left(node) if hasattr(tree, "rotate_right_left") else node
+                response.ok = False
 
-            return node
+                response.error = (
+                    "max_steps must be "
+                    "a positive integer "
+                    "or None"
+                )
 
-        tree.root = _post_order_rebalance(tree.root)
-        return unbalanced_node_found[0], rotations_summary
+                return response
 
-    @staticmethod
-    def _update_heights(node: Any) -> int:
-        if node is None:
-            return -1
-        left = node.left if hasattr(node, "left") else getattr(node, "get_left", lambda: None)()
-        right = node.right if hasattr(node, "right") else getattr(node, "get_right", lambda: None)()
-        node.height = 1 + max(QueueProcessingService._update_heights(left), QueueProcessingService._update_heights(right))
-        return node.height
 
-    @staticmethod
-    def _record_undo(sismolab: Any, action_type: str, description: str):
-        from src.services.persistencia import PersistenceService
-        from src.models.UndoAction import UndoAction
+        report_queue = (
+            self.sismolab
+            .get_report_queue()
+        )
 
-        snapshot = PersistenceService.export_state(sismolab)
-        action = UndoAction(action_type=action_type, description=description, previous_state=snapshot)
-        sismolab.get_undo_stack().push(action)
+        results = []
+
+
+        while not report_queue.is_empty():
+
+            if (
+                max_steps is not None
+                and
+                len(results) >= max_steps
+            ):
+
+                break
+
+
+            step_result = (
+                self.process_next_report()
+            )
+
+
+            results.append(
+                step_result.to_dict()
+            )
+
+
+            # Un error tÃ©cnico detiene
+            # procesamiento continuo.
+            if not step_result.ok:
+                break
+
+
+            # Pausa visible entre pasos.
+            if (
+                pause_seconds > 0
+                and
+                not report_queue.is_empty()
+            ):
+
+                sleep(
+                    pause_seconds
+                )
+
+
+        response.data = {
+
+            "processed_steps":
+                len(results),
+
+            "remaining_reports":
+                report_queue.size(),
+
+            "steps":
+                results
+        }
+
+
+        response.msg = (
+            "Continuous processing finished"
+        )
+
+
+        return response
+
+
+    # =========================================================
+    # ENTRAR EN MODO ESTRÃ‰S
+    # =========================================================
+
+    def enter_stress_mode(self):
+
+        response = DataAndMsgReturn()
+
+        scenario = (
+            self.sismolab
+            .get_scenario()
+        )
+
+
+        if scenario.is_stress_mode():
+
+            response.data = {
+                "stress_mode": True
+            }
+
+            response.msg = (
+                "Stress mode is already enabled"
+            )
+
+            return response
+
+
+        state_before = (
+            self.undo_service
+            .capture_state(
+                self.sismolab
+            )
+        )
+
+
+        scenario.set_stress_mode(
+            True
+        )
+
+
+        self.undo_service.push_snapshot(
+            self.sismolab,
+            "CHANGE_STRESS_MODE",
+            "Enable stress mode",
+            state_before
+        )
+
+
+        response.data = {
+            "stress_mode": True
+        }
+
+
+        response.msg = (
+            "Stress mode enabled. "
+            "AVL rotations are deferred"
+        )
+
+
+        return response
+
+
+    # =========================================================
+    # RECUPERACIÃ“N GLOBAL
+    # =========================================================
+
+    def recover_avl_balance(self):
+
+        response = DataAndMsgReturn()
+
+        scenario = (
+            self.sismolab
+            .get_scenario()
+        )
+
+        avl_tree = (
+            self.sismolab
+            .get_avl_tree()
+        )
+
+
+        # Esta operaciÃ³n corresponde
+        # especÃ­ficamente al modo estrÃ©s.
+        if not scenario.is_stress_mode():
+
+            response.ok = False
+
+            response.error = (
+                "Global recovery is only "
+                "required while stress mode "
+                "is active"
+            )
+
+            return response
+
+        state_before = (
+            self.undo_service
+            .capture_state(
+                self.sismolab
+            )
+        )
+
+        avl_tree.clear_rotation_log()
+
+
+        # IMPORTANTE:
+        #
+        # recover_balance NO vacÃ­a el Ã¡rbol.
+        # Trabaja sobre la estructura existente.
+        recovery_cost = (
+            avl_tree.recover_balance()
+        )
+
+
+        rotations = (
+            avl_tree.get_rotation_log()
+        )
+
+
+        self._register_rotation_metrics(
+            rotations
+        )
+
+
+        # Rotaciones modifican profundidades.
+        self.access_service \
+            .update_access_marks()
+
+
+        # Primera protecciÃ³n:
+        # comprobar estructuralmente el balance.
+        if not avl_tree.is_balanced():
+
+            response.ok = False
+
+            response.error = (
+                "Global recovery did not "
+                "restore the AVL balance condition"
+            )
+
+            response.data = {
+
+                "recovery_completed": False,
+
+                "rotations":
+                    rotations,
+
+                "cost":
+                    recovery_cost
+            }
+
+            PersistenceService.apply_state(
+                self.sismolab,
+                state_before
+            )
+            # Sigue en modo estrÃ©s.
+            return response
+
+
+        # Probamos temporalmente el modo normal
+        # para que la auditorÃ­a exija balance AVL.
+        scenario.set_stress_mode(
+            False
+        )
+
+
+        try:
+
+            audit_result = (
+                AuditService
+                .verify_structure(
+                    self.sismolab
+                )
+            )
+
+        except Exception as exc:
+
+            PersistenceService.apply_state(
+                self.sismolab,
+                state_before
+            )
+
+            response.ok = False
+
+            response.error = (
+                "Recovery finished, but "
+                "audit could not be completed: "
+                f"{exc}"
+            )
+
+            response.data = {
+
+                "recovery_completed":
+                    False,
+
+                "rotations":
+                    rotations,
+
+                "cost":
+                    recovery_cost
+            }
+
+            return response
+
+        audit_data = (
+            audit_result.data
+            or
+            {}
+        )
+
+
+        # Solamente permanecemos en modo normal
+        # cuando AuditService confirma validez.
+        if not audit_data.get(
+            "is_valid",
+            False
+        ):
+
+
+            response.ok = False
+
+            response.error = (
+                "Audit rejected the "
+                "recovered AVL. "
+                "Stress mode remains active"
+            )
+
+
+            response.data = {
+
+                "recovery_completed":
+                    False,
+
+                "rotations":
+                    rotations,
+
+                "cost":
+                    recovery_cost,
+
+                "audit":
+                    audit_data
+            }
+
+            PersistenceService.apply_state(
+                self.sismolab,
+                state_before
+            )
+            return response
+
+
+        # La auditorÃ­a confirmÃ³ el Ã¡rbol.
+        response.data = {
+
+            "recovery_completed":
+                True,
+
+            "stress_mode":
+                False,
+
+            "rotations":
+                rotations,
+
+            "rotation_count":
+                len([
+                    rotation
+                    for rotation in rotations
+                    if rotation.get("kind")
+                    == "rotation"
+                ]),
+
+            "cost":
+                recovery_cost,
+
+            "audit":
+                audit_data
+        }
+
+
+        response.msg = (
+            "Global AVL recovery completed "
+            "and confirmed by audit"
+        )
+
+        self.undo_service.push_snapshot(
+            self.sismolab,
+            "GLOBAL_RECOVERY",
+            "Recover AVL balance after stress mode",
+            state_before
+        )
+
+        return response
+
+
+    # =========================================================
+    # AUXILIARES
+    # =========================================================
+
+    def _station_name(
+        self,
+        report
+    ):
+
+        station = report.station
+
+
+        if station is None:
+            return None
+
+
+        if hasattr(
+            station,
+            "name"
+        ):
+
+            return station.name
+
+
+        return str(
+            station
+        )
+
+
+    # Registra mÃ©tricas de balanceo utilizando
+    # el log generado por AVLTree.
+    def _register_rotation_metrics(
+        self,
+        rotations
+    ):
+
+        metrics = (
+            self.sismolab
+            .get_metrics()
+        )
+
+
+        for item in rotations:
+
+            if item.get("kind") == "case":
+
+                case = item.get(
+                    "case"
+                )
+
+
+                if case == "LL":
+
+                    metrics.increment_ll_case()
+
+
+                elif case == "RR":
+
+                    metrics.increment_rr_case()
+
+
+                elif case == "LR":
+
+                    metrics.increment_lr_case()
+
+
+                elif case == "RL":
+
+                    metrics.increment_rl_case()
+
+
+            elif (
+                item.get("kind")
+                ==
+                "rotation"
+            ):
+
+                direction = item.get(
+                    "direction"
+                )
+
+
+                if direction == "LEFT":
+
+                    metrics \
+                        .increment_left_rotation()
+
+
+                elif direction == "RIGHT":
+
+                    metrics \
+                        .increment_right_rotation()
+                    
+

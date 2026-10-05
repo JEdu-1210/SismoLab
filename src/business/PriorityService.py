@@ -1,4 +1,4 @@
-class PriorityService:
+﻿class PriorityService:
 
     @staticmethod
     def calculate_priority(
@@ -15,9 +15,9 @@ class PriorityService:
         if magnitude >= 6.0:
             return 3
 
-        # También es alta si:
+        # TambiÃ©n es alta si:
         # M >= 4.5, H <= 30
-        # y está en zona poblada.
+        # y estÃ¡ en zona poblada.
         if (
             magnitude >= 4.5
             and depth <= 30.0

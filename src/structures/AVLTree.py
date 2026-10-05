@@ -1,4 +1,4 @@
-from structures.AVLNode import AVLNode
+﻿from src.structures.AVLNode import AVLNode
 
 
 class AVLTree:
@@ -7,19 +7,22 @@ class AVLTree:
 
         self._root = None
 
+        # Registro temporal de casos de balanceo
+        # y rotaciones realizadas por el AVL.
+        self._rotation_log = []
 
     # =========================================================
-    # RAÍZ Y ESTADO DEL ÁRBOL
+    # RAÃZ Y ESTADO DEL ÃRBOL
     # =========================================================
 
-    # Retorna la raíz del árbol.
+    # Retorna la raÃ­z del Ã¡rbol.
     def get_root(self):
 
         return self._root
 
 
-    # Cambia la raíz del árbol.
-    # La raíz nunca debe tener padre.
+    # Cambia la raÃ­z del Ã¡rbol.
+    # La raÃ­z nunca debe tener padre.
     def set_root(self, node):
 
         self._root = node
@@ -28,7 +31,60 @@ class AVLTree:
             self._root.set_parent(None)
 
 
-    # Retorna True si el árbol está vacío.
+    # =========================================================
+    # ROTATION LOG
+    # =========================================================
+
+    # Limpia las rotaciones registradas.
+    #
+    # Se llama antes de comenzar una operaciÃ³n
+    # para saber exactamente quÃ© rotaciones
+    # produjo esa operaciÃ³n.
+    def clear_rotation_log(self):
+
+        self._rotation_log.clear()
+
+
+    # Retorna una copia del registro.
+    def get_rotation_log(self):
+
+        return [
+            dict(item)
+            for item in self._rotation_log
+        ]
+
+
+    # Registra el tipo de caso AVL encontrado:
+    # LL, RR, LR o RL.
+    def _log_balance_case(
+        self,
+        case,
+        node
+    ):
+
+        self._rotation_log.append({
+            "kind": "case",
+            "case": case,
+            "node_id": node.get_event().identifier,
+            "key": node.get_key()
+        })
+
+
+    # Registra un giro elemental.
+    def _log_rotation(
+        self,
+        direction,
+        node
+    ):
+
+        self._rotation_log.append({
+            "kind": "rotation",
+            "direction": direction,
+            "pivot_id": node.get_event().identifier,
+            "pivot_key": node.get_key()
+        })
+
+    # Retorna True si el Ã¡rbol estÃ¡ vacÃ­o.
     # Retorna False si contiene al menos un nodo.
     def is_empty(self):
 
@@ -42,21 +98,21 @@ class AVLTree:
 
     # Recibe un Event.
     # rebalance = True:
-    # inserción normal del AVL.
+    # inserciÃ³n normal del AVL.
     #
     # rebalance = False:
-    # inserción en modo estrés.
+    # inserciÃ³n en modo estrÃ©s.
     # Mantiene el orden BST pero no realiza rotaciones.
     #
     # Retorna:
     # - el AVLNode insertado.
-    # - None si la llave ya existía.
+    # - None si la llave ya existÃ­a.
     def insert(self, event, rebalance=True):
 
         new_node = AVLNode(event)
 
 
-        # Si no existe raíz, el nuevo nodo se convierte en raíz.
+        # Si no existe raÃ­z, el nuevo nodo se convierte en raÃ­z.
         if self._root is None:
 
             self._root = new_node
@@ -70,7 +126,7 @@ class AVLTree:
         )
 
 
-        # Si la llave ya existía, no se insertó.
+        # Si la llave ya existÃ­a, no se insertÃ³.
         if inserted_node is None:
 
             return None
@@ -84,7 +140,7 @@ class AVLTree:
             )
 
 
-        # En modo estrés no hacemos rotaciones,
+        # En modo estrÃ©s no hacemos rotaciones,
         # pero las alturas deben seguir actualizadas.
         else:
 
@@ -96,7 +152,7 @@ class AVLTree:
         return inserted_node
 
 
-    # Método privado recursivo para insertar.
+    # MÃ©todo privado recursivo para insertar.
     def _insert(self, new_node, current_node):
 
         new_key = new_node.get_key()
@@ -202,7 +258,7 @@ class AVLTree:
 
     # BUSCAR POR LLAVE CONTANDO COMPARACIONES
 
-    # Busca por K y además cuenta cuántos nodos fueron visitados.
+    # Busca por K y ademÃ¡s cuenta cuÃ¡ntos nodos fueron visitados.
     #
     # Retorna una tupla:
     #
@@ -240,13 +296,13 @@ class AVLTree:
 
     # BUSCAR SOLAMENTE POR ID
 
-    # Busca un Event utilizando únicamente su identifier.
+    # Busca un Event utilizando Ãºnicamente su identifier.
     #
-    # Como el AVL está ordenado por K=(P,M,I),
-    # el ID por sí solo no permite decidir si ir
+    # Como el AVL estÃ¡ ordenado por K=(P,M,I),
+    # el ID por sÃ­ solo no permite decidir si ir
     # solamente a izquierda o derecha.
     #
-    # Por eso puede ser necesario recorrer todo el árbol.
+    # Por eso puede ser necesario recorrer todo el Ã¡rbol.
     def search_by_id(self, identifier):
 
         if self.is_empty():
@@ -275,7 +331,7 @@ class AVLTree:
             return current_node
 
 
-        # Primero buscamos en el subárbol izquierdo.
+        # Primero buscamos en el subÃ¡rbol izquierdo.
         found_node = self._search_by_id(
             identifier,
             current_node.get_left()
@@ -287,8 +343,8 @@ class AVLTree:
             return found_node
 
 
-        # Si no apareció a la izquierda,
-        # buscamos en el subárbol derecho.
+        # Si no apareciÃ³ a la izquierda,
+        # buscamos en el subÃ¡rbol derecho.
         return self._search_by_id(
             identifier,
             current_node.get_right()
@@ -348,7 +404,7 @@ class AVLTree:
 
     # =========================================================
     # PREORDEN
-    # Raíz - Izquierda - Derecha
+    # RaÃ­z - Izquierda - Derecha
     # =========================================================
 
     def preorder(self):
@@ -389,7 +445,7 @@ class AVLTree:
 
     # =========================================================
     # INORDEN
-    # Izquierda - Raíz - Derecha
+    # Izquierda - RaÃ­z - Derecha
     # =========================================================
 
     def inorder(self):
@@ -430,10 +486,10 @@ class AVLTree:
 
     # =========================================================
     # INORDEN INVERSO
-    # Derecha - Raíz - Izquierda
+    # Derecha - RaÃ­z - Izquierda
     #
     # Devuelve las llaves de mayor a menor.
-    # Nos servirá para consultas Top-K.
+    # Nos servirÃ¡ para consultas Top-K.
     # =========================================================
 
     def reverse_inorder(self):
@@ -478,7 +534,7 @@ class AVLTree:
 
     # =========================================================
     # POSTORDEN
-    # Izquierda - Derecha - Raíz
+    # Izquierda - Derecha - RaÃ­z
     # =========================================================
 
     def postorder(self):
@@ -567,7 +623,7 @@ class AVLTree:
         )
 
 
-    # Actualiza alturas desde un nodo hasta la raíz.
+    # Actualiza alturas desde un nodo hasta la raÃ­z.
     def _update_heights_upward(self, node):
 
         current_node = node
@@ -584,10 +640,10 @@ class AVLTree:
             )
 
 
-    # Retorna la altura del árbol.
+    # Retorna la altura del Ã¡rbol.
     #
-    # Árbol vacío = -1.
-    # Una sola raíz = 0.
+    # Ãrbol vacÃ­o = -1.
+    # Una sola raÃ­z = 0.
     def height(self):
 
         if self._root is None:
@@ -638,7 +694,7 @@ class AVLTree:
     # "RR"
     # "LR"
     # "RL"
-    # o None si no está desbalanceado.
+    # o None si no estÃ¡ desbalanceado.
     def _detect_imbalance_case(self, node):
 
         balance = self.get_balance_factor(
@@ -646,7 +702,7 @@ class AVLTree:
         )
 
 
-        # El árbol pesa demasiado hacia la izquierda.
+        # El Ã¡rbol pesa demasiado hacia la izquierda.
         if balance > 1:
 
             left_balance = (
@@ -666,7 +722,7 @@ class AVLTree:
             return "LR"
 
 
-        # El árbol pesa demasiado hacia la derecha.
+        # El Ã¡rbol pesa demasiado hacia la derecha.
         if balance < -1:
 
             right_balance = (
@@ -696,10 +752,15 @@ class AVLTree:
 
     def _rotate_left(self, superior):
 
+        self._log_rotation(
+            "LEFT",
+            superior
+        )
+
         middle = superior.get_right()
 
 
-        # Este subárbol cambia de padre durante el giro.
+        # Este subÃ¡rbol cambia de padre durante el giro.
         middle_left = middle.get_left()
 
 
@@ -713,8 +774,8 @@ class AVLTree:
         )
 
 
-        # Si superior era la raíz,
-        # middle pasa a ser la nueva raíz.
+        # Si superior era la raÃ­z,
+        # middle pasa a ser la nueva raÃ­z.
         if old_parent is None:
 
             self._root = middle
@@ -760,13 +821,13 @@ class AVLTree:
             )
 
 
-        # Primero se actualiza el que quedó abajo.
+        # Primero se actualiza el que quedÃ³ abajo.
         self._update_height(
             superior
         )
 
 
-        # Después el que quedó arriba.
+        # DespuÃ©s el que quedÃ³ arriba.
         self._update_height(
             middle
         )
@@ -782,6 +843,10 @@ class AVLTree:
 
     def _rotate_right(self, superior):
 
+        self._log_rotation(
+            "RIGHT",
+            superior
+        )
         middle = superior.get_left()
 
 
@@ -797,8 +862,8 @@ class AVLTree:
         )
 
 
-        # Si superior era raíz,
-        # middle se convierte en nueva raíz.
+        # Si superior era raÃ­z,
+        # middle se convierte en nueva raÃ­z.
         if old_parent is None:
 
             self._root = middle
@@ -861,9 +926,9 @@ class AVLTree:
     # BALANCEAR UN NODO
     # =========================================================
 
-    # Revisa un nodo y ejecuta la rotación necesaria.
+    # Revisa un nodo y ejecuta la rotaciÃ³n necesaria.
     #
-    # Retorna la nueva raíz local del subárbol.
+    # Retorna la nueva raÃ­z local del subÃ¡rbol.
     def _rebalance_node(self, node):
 
         if node is None:
@@ -881,11 +946,15 @@ class AVLTree:
         )
 
 
-        # No necesita rotación.
+        # No necesita rotaciÃ³n.
         if case is None:
 
             return node
 
+        self._log_balance_case(
+            case,
+            node
+        )
 
         # LL:
         # giro simple a la derecha.
@@ -908,7 +977,7 @@ class AVLTree:
         # LR:
         # primero gira el hijo izquierdo
         # hacia la izquierda.
-        # Después gira el superior
+        # DespuÃ©s gira el superior
         # hacia la derecha.
         if case == "LR":
 
@@ -924,7 +993,7 @@ class AVLTree:
         # RL:
         # primero gira el hijo derecho
         # hacia la derecha.
-        # Después gira el superior
+        # DespuÃ©s gira el superior
         # hacia la izquierda.
         if case == "RL":
 
@@ -938,7 +1007,7 @@ class AVLTree:
 
 
     # =========================================================
-    # BALANCEAR DESDE UN NODO HASTA LA RAÍZ
+    # BALANCEAR DESDE UN NODO HASTA LA RAÃZ
     # =========================================================
 
     def _rebalance_upward(self, node):
@@ -948,8 +1017,8 @@ class AVLTree:
 
         while current_node is not None:
 
-            # Puede ocurrir una rotación y cambiar
-            # cuál nodo quedó arriba.
+            # Puede ocurrir una rotaciÃ³n y cambiar
+            # cuÃ¡l nodo quedÃ³ arriba.
             new_local_root = (
                 self._rebalance_node(
                     current_node
@@ -970,11 +1039,11 @@ class AVLTree:
     # AVL normal.
     #
     # rebalance = False:
-    # modo estrés, no realiza rotaciones.
+    # modo estrÃ©s, no realiza rotaciones.
     #
     # Retorna:
     # - Event eliminado.
-    # - None si no existía.
+    # - None si no existÃ­a.
     def delete(self, key, rebalance=True):
 
         node = self.search(
@@ -992,7 +1061,7 @@ class AVLTree:
         )
 
 
-        # El método devuelve desde qué nodo
+        # El mÃ©todo devuelve desde quÃ© nodo
         # debemos comenzar a actualizar/balancear.
         start_node = self._delete_node(
             node
@@ -1016,7 +1085,7 @@ class AVLTree:
         return deleted_event
 
 
-    # Elimina físicamente un nodo.
+    # Elimina fÃ­sicamente un nodo.
     #
     # Retorna el nodo desde el cual se deben
     # actualizar alturas y balance.
@@ -1166,7 +1235,7 @@ class AVLTree:
         # Tiene dos hijos.
         #
         # Utilizamos el mayor nodo
-        # del subárbol izquierdo.
+        # del subÃ¡rbol izquierdo.
         # -----------------------------------------------------
 
         predecessor = self._maximum_from(
@@ -1209,7 +1278,7 @@ class AVLTree:
             start_node = node
 
 
-        # Si está más abajo en el subárbol.
+        # Si estÃ¡ mÃ¡s abajo en el subÃ¡rbol.
         else:
 
             predecessor_parent.set_right(
@@ -1239,7 +1308,7 @@ class AVLTree:
 
 
     # =========================================================
-    # MÍNIMO Y MÁXIMO
+    # MÃNIMO Y MÃXIMO
     # =========================================================
 
     def minimum(self):
@@ -1297,7 +1366,7 @@ class AVLTree:
 
 
   
-    # K-ÉSIMO MENOR
+    # K-Ã‰SIMO MENOR
 
     def kth_smallest(self, k):
 
@@ -1362,8 +1431,8 @@ class AVLTree:
 
     # CANTIDAD DE NODOS
 
-    # Puede recibir una raíz específica para conocer
-    # el tamaño de un subárbol.
+    # Puede recibir una raÃ­z especÃ­fica para conocer
+    # el tamaÃ±o de un subÃ¡rbol.
     def count_nodes(self, node=None):
 
         if node is None:
@@ -1406,9 +1475,9 @@ class AVLTree:
     # PROFUNDIDAD DE UN NODO
     # =========================================================
 
-    # La raíz tiene profundidad 0.
+    # La raÃ­z tiene profundidad 0.
     #
-    # El método recorre los padres hasta llegar a la raíz.
+    # El mÃ©todo recorre los padres hasta llegar a la raÃ­z.
     def get_depth(self, node):
 
         if node is None:
@@ -1433,17 +1502,17 @@ class AVLTree:
         return depth
 
 
-    # DESPRENDER UN SUBÁRBOL
+    # DESPRENDER UN SUBÃRBOL
 
-    # Quita un subárbol completo del AVL activo,
+    # Quita un subÃ¡rbol completo del AVL activo,
     # pero NO destruye sus nodos.
-    # Esto permitirá guardar la raíz retornada
+    # Esto permitirÃ¡ guardar la raÃ­z retornada
     # dentro de History.
     #
     # Los hijos internos permanecen conectados.
     #
     # Retorna:
-    # - la raíz del subárbol separado.
+    # - la raÃ­z del subÃ¡rbol separado.
     # - None si el nodo recibido era None.
     def detach_subtree(
         self,
@@ -1459,7 +1528,7 @@ class AVLTree:
         parent = node.get_parent()
 
 
-        # Si se está desprendiendo todo el árbol.
+        # Si se estÃ¡ desprendiendo todo el Ã¡rbol.
         if parent is None:
 
             self._root = None
@@ -1481,11 +1550,11 @@ class AVLTree:
             parent.set_right(None)
 
 
-        # Ahora la raíz archivada deja de tener padre.
+        # Ahora la raÃ­z archivada deja de tener padre.
         node.set_parent(None)
 
 
-        # El árbol activo debe actualizarse.
+        # El Ã¡rbol activo debe actualizarse.
         if rebalance:
 
             self._rebalance_upward(
@@ -1506,7 +1575,7 @@ class AVLTree:
   
     # RECALCULAR TODAS LAS ALTURAS
 
-    # Recalcula las alturas desde las hojas hacia la raíz.
+    # Recalcula las alturas desde las hojas hacia la raÃ­z.
     #
     # Retorna la altura calculada del nodo recibido.
     def _recalculate_heights(self, node):
@@ -1543,7 +1612,7 @@ class AVLTree:
         return calculated_height
 
 
-    # Método público para recalcular todas las alturas.
+    # MÃ©todo pÃºblico para recalcular todas las alturas.
     def recalculate_heights(self):
 
         return self._recalculate_heights(
@@ -1602,56 +1671,149 @@ class AVLTree:
 
         return None
 
-    # RECUPERACIÓN GLOBAL DESPUÉS DEL MODO ESTRÉS
+    # Busca un nodo desbalanceado y ademÃ¡s
+    # cuenta cuÃ¡ntos nodos fueron examinados.
+    def _find_unbalanced_node_with_count(
+        self,
+        node
+    ):
+
+        visited = 0
+
+
+        def visit(current):
+
+            nonlocal visited
+
+
+            if current is None:
+                return None
+
+
+            visited += 1
+
+
+            found_left = visit(
+                current.get_left()
+            )
+
+            if found_left is not None:
+                return found_left
+
+
+            found_right = visit(
+                current.get_right()
+            )
+
+            if found_right is not None:
+                return found_right
+
+
+            balance = self.get_balance_factor(
+                current
+            )
+
+
+            if (
+                balance > 1
+                or
+                balance < -1
+            ):
+
+                return current
+
+
+            return None
+
+
+        return visit(node), visited
+
+
+    # Retorna True si todo el Ã¡rbol
+    # cumple la condiciÃ³n AVL.
+    def is_balanced(self):
+
+        self.recalculate_heights()
+
+        return (
+            self._find_unbalanced_node(
+                self._root
+            )
+            is None
+        )
+
+    # RECUPERACIÃ“N GLOBAL DESPUÃ‰S DEL MODO ESTRÃ‰S
 
 
     # Busca desbalances y realiza rotaciones
-    # hasta que todo el árbol vuelva a cumplir AVL.
+    # hasta que todo el Ã¡rbol vuelva a cumplir AVL.
     #
-    # No vacía el árbol ni lo reconstruye.
+    # No vacÃ­a el Ã¡rbol ni lo reconstruye.
+
+    # RECUPERACIÃ“N GLOBAL DESPUÃ‰S DEL MODO ESTRÃ‰S
+    # Corrige el Ã¡rbol existente.
+    # NO vacÃ­a el AVL.
+    # NO reconstruye a partir de una lista.
     def recover_balance(self):
+
+        nodes_examined = 0
+        rebalance_steps = 0
+
 
         while True:
 
-            # Primero nos aseguramos de que
-            # las alturas almacenadas sean correctas.
+            # Primero aseguramos que las alturas
+            # almacenadas sean correctas.
             self.recalculate_heights()
 
 
-            unbalanced_node = (
-                self._find_unbalanced_node(
+            (
+                unbalanced_node,
+                visited
+            ) = (
+                self._find_unbalanced_node_with_count(
                     self._root
                 )
             )
 
 
-            # Si no queda ningún nodo desbalanceado,
-            # termina la recuperación.
-            if unbalanced_node is None:
+            nodes_examined += visited
 
+
+            # No quedan desbalances.
+            if unbalanced_node is None:
                 break
 
 
-            # Realizamos una corrección estructural.
+            # Arreglamos un desbalance del Ã¡rbol
+            # existente.
             self._rebalance_node(
                 unbalanced_node
             )
 
 
-        # Recalculamos una última vez.
+            rebalance_steps += 1
+
+
         self.recalculate_heights()
+
+
+        return {
+            "nodes_examined": nodes_examined,
+            "rebalance_steps": rebalance_steps
+        }
 
 
     # =========================================================
     # DIBUJAR EN CONSOLA
     # =========================================================
 
-    # Método únicamente útil para pruebas y depuración.
+    # MÃ©todo Ãºnicamente Ãºtil para pruebas y depuraciÃ³n.
     def draw(self):
 
         if self._root is None:
 
-            print("El árbol está vacío")
+            print("El Ã¡rbol estÃ¡ vacÃ­o")
 
             return
 
@@ -1687,7 +1849,7 @@ class AVLTree:
             +
             position
             +
-            "── "
+            "â”€â”€ "
             +
             str(current_node.get_key())
             +

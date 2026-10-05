@@ -1,4 +1,4 @@
-from models.Status import CatalogStatus
+﻿from src.models.Status import CatalogStatus
 
 
 class AccessService:
@@ -47,7 +47,7 @@ class AccessService:
 
     # CAMBIAR L
 
-    # Cambia el límite de acceso
+    # Cambia el lÃ­mite de acceso
     # y actualiza inmediatamente
     # todas las marcas.
     def update_access_limit(
@@ -84,7 +84,7 @@ class AccessService:
         )
 
 
-    # INFORMACIÓN DE ACCESO DE UN EVENTO
+    # INFORMACIÃ“N DE ACCESO DE UN EVENTO
 
     def get_event_access_info(
         self,
@@ -139,7 +139,7 @@ class AccessService:
         avl_tree = self.sismolab.get_avl_tree()
 
 
-        # Aprovechamos el método que ya tenía
+        # Aprovechamos el mÃ©todo que ya tenÃ­a
         # el AVL para contar nodos visitados.
         (
             node,
@@ -175,7 +175,7 @@ class AccessService:
         )
 
 
-        # Dejamos también actualizada
+        # Dejamos tambiÃ©n actualizada
         # la marca almacenada en el nodo.
         node.set_costly_access(
             costly_access

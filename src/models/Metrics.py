@@ -1,4 +1,4 @@
-class Metrics:
+﻿class Metrics:
 
     def __init__(self):
 
@@ -78,8 +78,8 @@ class Metrics:
 
     # EVENTOS ARCHIVADOS
 
-    # Permite aumentar más de uno porque una operación
-    # de archivo puede mover un subárbol completo.
+    # Permite aumentar mÃ¡s de uno porque una operaciÃ³n
+    # de archivo puede mover un subÃ¡rbol completo.
     def increment_archived_events(
         self,
         amount=1
@@ -158,10 +158,72 @@ class Metrics:
 
         return self._right_rotations
 
+    # Registra los casos y giros contenidos
+    # en el rotation_log del AVL.
+    def register_rotation_log(
+        self,
+        rotation_log
+    ):
+
+        if rotation_log is None:
+
+            return
+
+
+        for item in rotation_log:
+
+            kind = item.get(
+                "kind"
+            )
+
+
+            if kind == "case":
+
+                case = item.get(
+                    "case"
+                )
+
+
+                if case == "LL":
+
+                    self.increment_ll_case()
+
+
+                elif case == "RR":
+
+                    self.increment_rr_case()
+
+
+                elif case == "LR":
+
+                    self.increment_lr_case()
+
+
+                elif case == "RL":
+
+                    self.increment_rl_case()
+
+
+            elif kind == "rotation":
+
+                direction = item.get(
+                    "direction"
+                )
+
+
+                if direction == "LEFT":
+
+                    self.increment_left_rotation()
+
+
+                elif direction == "RIGHT":
+
+                    self.increment_right_rotation()
+
     # RESUMEN
 
     # Retorna todos los contadores actuales.
-    # Será útil para interfaz, JSON, versiones y undo.
+    # SerÃ¡ Ãºtil para interfaz, JSON, versiones y undo.
     def get_summary(self):
 
         return {
@@ -201,7 +263,7 @@ class Metrics:
         }
 
 
-    # Permite restaurar métricas desde un estado anterior.
+    # Permite restaurar mÃ©tricas desde un estado anterior.
     def load_summary(self, data):
 
         self._accepted_corrections = (

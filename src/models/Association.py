@@ -1,4 +1,4 @@
-from models.Event import Event
+﻿from src.models.Event import Event
 
 
 class Association:
@@ -8,7 +8,7 @@ class Association:
         reference_event: Event,
         aftershock_event: Event
     ):
-        # Un evento no puede ser referencia de sí mismo
+        # Un evento no puede ser referencia de sÃ­ mismo
         if (
             reference_event.identifier
             ==
@@ -29,7 +29,7 @@ class Association:
 
     def to_dict(self) -> dict:
         """
-        Retorna la representación en diccionario serializable a JSON.
+        Retorna la representaciÃ³n en diccionario serializable a JSON.
         """
         return {
             "reference_event_id": self._reference_event.identifier,
@@ -37,3 +37,4 @@ class Association:
             "reference_event": self._reference_event.to_dict() if hasattr(self._reference_event, "to_dict") else self._reference_event,
             "aftershock_event": self._aftershock_event.to_dict() if hasattr(self._aftershock_event, "to_dict") else self._aftershock_event
         }
+

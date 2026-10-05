@@ -1,4 +1,4 @@
-from math import isfinite
+﻿from math import isfinite
 
 
 class Station:
@@ -24,7 +24,7 @@ class Station:
 
 
     # Las estaciones permanecen
-    # inmutables durante la ejecución.
+    # inmutables durante la ejecuciÃ³n.
     #
     # Se permiten lecturas pero
     # no existen setters.

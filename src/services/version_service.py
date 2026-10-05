@@ -1,198 +1,694 @@
-import os
+﻿from datetime import datetime, timezone
+from hashlib import sha256
 from pathlib import Path
-from datetime import datetime
-from typing import Any, List, Dict, Optional
 
-from src.utils.Files import Files
-from src.models.Returnings import BaseReturn, DataAndMsgReturn
-from src.models.Version import Version
-from src.services.persistencia import PersistenceService
-from src.models.Event import Event
-from src.models.Report import Report
+from src.models.Returnings import (
+    BaseReturn,
+    DataAndMsgReturn
+)
+
+from src.services.persistencia import (
+    PersistenceService
+)
+
+from src.services.undo_service import (
+    UndoService
+)
+
+from src.utils.Files import FilesUtils
 
 
 class VersionService:
 
-    def __init__(self, storage_dir: str = "data/versions"):
-        self.storage_dir = Path(storage_dir)
-        self.storage_dir.mkdir(parents=True, exist_ok=True)
+    VERSION_SCHEMA = (
+        "SismoLabAVLVersion"
+    )
 
-    def _get_filepath(self, version_name: str) -> str:
-        """Helper para generar un nombre de archivo seguro en disco."""
-        safe_filename = "".join(c for c in version_name if c.isalnum() or c in ("_", "-")).rstrip()
-        return str(self.storage_dir / f"{safe_filename}.json")
+    VERSION_SCHEMA_VERSION = 1
 
-    def create_version(self, name: str, description: str, sismolab: Any) -> BaseReturn:
-        """
-        Captura el estado operativo actual de SismoLab (excluyendo la pila de undo)
-        y lo persiste en disco como una versión nombrada.
-        """
-        response = BaseReturn()
 
-        if not name or not name.strip():
+    def __init__(
+        self,
+        storage_dir="Data/versions"
+    ):
+
+        self.storage_dir = Path(
+            storage_dir
+        )
+
+
+        self.storage_dir.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+
+        self.undo_service = (
+            UndoService()
+        )
+
+
+    # =========================================================
+    # VALIDAR NOMBRE
+    # =========================================================
+
+    def _normalize_name(
+        self,
+        name
+    ):
+
+        if not isinstance(
+            name,
+            str
+        ):
+
+            raise ValueError(
+                "Version name must "
+                "be a string"
+            )
+
+
+        name = name.strip()
+
+
+        if name == "":
+
+            raise ValueError(
+                "Version name "
+                "cannot be empty"
+            )
+
+
+        return name
+
+
+    # =========================================================
+    # ARCHIVO DE UNA VERSIÃ“N
+    # =========================================================
+
+    # El hash evita colisiones entre nombres
+    # parecidos al convertirlos a archivo.
+    def _get_filepath(
+        self,
+        version_name
+    ):
+
+        version_name = (
+            self._normalize_name(
+                version_name
+            )
+        )
+
+
+        safe_part = "".join(
+
+            char
+
+            if (
+                char.isalnum()
+                or
+                char in (
+                    "_",
+                    "-"
+                )
+            )
+
+            else "_"
+
+            for char
+            in version_name
+        )
+
+
+        safe_part = (
+            safe_part[:40]
+            or
+            "version"
+        )
+
+
+        digest = (
+            sha256(
+                version_name
+                .encode(
+                    "utf-8"
+                )
+            )
+            .hexdigest()[:10]
+        )
+
+
+        return (
+            self.storage_dir
+            /
+            f"{safe_part}_{digest}.json"
+        )
+
+
+    # =========================================================
+    # CREAR VERSIÃ“N
+    # =========================================================
+
+    def create_version(
+        self,
+        name,
+        description,
+        sismolab,
+        overwrite=False
+    ):
+
+        response = DataAndMsgReturn()
+
+
+        try:
+
+            name = (
+                self._normalize_name(
+                    name
+                )
+            )
+
+
+        except ValueError as exc:
+
             response.ok = False
-            response.error = "El nombre de la versión no puede estar vacío."
+            response.error = str(exc)
+
             return response
 
-        filepath = self._get_filepath(name)
 
-        current_state = PersistenceService.export_state(sismolab)
+        if description is None:
+
+            description = ""
+
+
+        if not isinstance(
+            description,
+            str
+        ):
+
+            response.ok = False
+
+            response.error = (
+                "Version description "
+                "must be a string"
+            )
+
+            return response
+
+
+        filepath = (
+            self._get_filepath(
+                name
+            )
+        )
+
+
+        if (
+            filepath.is_file()
+            and
+            not overwrite
+        ):
+
+            response.ok = False
+
+            response.error = (
+                f"Version '{name}' "
+                "already exists"
+            )
+
+            return response
+
+
+        state = (
+            PersistenceService
+            .export_state(
+                sismolab
+            )
+        )
+
 
         version_data = {
-            "name": name.strip(),
-            "description": description.strip(),
-            "created_at": datetime.now().isoformat(),
-            "state": current_state
+
+            "schema":
+                self.VERSION_SCHEMA,
+
+            "schema_version":
+                self.VERSION_SCHEMA_VERSION,
+
+            "name":
+                name,
+
+            "description":
+                description.strip(),
+
+            "created_at":
+                datetime.now(
+                    timezone.utc
+                ).isoformat(
+                    timespec="seconds"
+                ),
+
+            # IMPORTANTE:
+            #
+            # Este state NO contiene:
+            # - undo stack
+            # - otras versiones
+            #
+            # justamente como exige
+            # el proyecto.
+            "state":
+                state
         }
 
-        save_result = Files.write_json(filepath, version_data)
+
+        save_result = (
+            FilesUtils.write_json(
+                str(filepath),
+                version_data
+            )
+        )
+
+
         if not save_result.ok:
+
             response.ok = False
-            response.error = f"Error al guardar el archivo de versión: {save_result.error}"
+
+            response.error = (
+                "Could not save version: "
+                f"{save_result.error}"
+            )
+
             return response
 
-        response.ok = True
+
+        response.data = {
+
+            "name":
+                name,
+
+            "description":
+                description.strip(),
+
+            "filepath":
+                str(filepath),
+
+            "created_at":
+                version_data[
+                    "created_at"
+                ]
+        }
+
+
+        response.msg = (
+            f"Version '{name}' "
+            "saved successfully"
+        )
+
+
         return response
 
-    def list_versions(self) -> DataAndMsgReturn:
-        """
-        Escanea el directorio de versiones y retorna la lista de metadatos almacenados.
-        """
+
+    # =========================================================
+    # LISTAR VERSIONES
+    # =========================================================
+
+    def list_versions(
+        self
+    ):
+
         response = DataAndMsgReturn()
-        versions_list: List[Dict[str, Any]] = []
+
+        versions = []
+
 
         try:
-            for file_path in self.storage_dir.glob("*.json"):
-                read_res = Files.read_json(str(file_path))
-                if read_res.data:
-                    data = read_res.data
-                    versions_list.append({
-                        "name": data.get("name", file_path.stem),
-                        "description": data.get("description", ""),
-                        "created_at": data.get("created_at", ""),
-                        "filename": file_path.name
-                    })
 
-            response.data = versions_list
-            response.msg = f"Se encontraron {len(versions_list)} versión(es) guardada(s)."
-        except Exception as e:
-            response.error = str(e)
+            for filepath in (
+                self.storage_dir
+                .glob("*.json")
+            ):
 
-        return response
+                read_result = (
+                    FilesUtils.read_json(
+                        str(filepath)
+                    )
+                )
 
-    def restore_version(self, name: str, sismolab: Any) -> DataAndMsgReturn:
-        """
-        Carga una versión JSON desde el disco y restaura el estado operativo.
-        Registra la restauración en la pila de deshacer para cumplir el Punto 13.
-        """
+
+                if (
+                    not read_result.ok
+                    or
+                    not isinstance(
+                        read_result.data,
+                        dict
+                    )
+                ):
+
+                    continue
+
+
+                data = read_result.data
+
+
+                if (
+                    data.get("schema")
+                    !=
+                    self.VERSION_SCHEMA
+                ):
+
+                    continue
+
+
+                if (
+                    data.get(
+                        "schema_version"
+                    )
+                    !=
+                    self.VERSION_SCHEMA_VERSION
+                ):
+
+                    continue
+
+
+                versions.append({
+
+                    "name":
+                        data.get(
+                            "name"
+                        ),
+
+                    "description":
+                        data.get(
+                            "description",
+                            ""
+                        ),
+
+                    "created_at":
+                        data.get(
+                            "created_at"
+                        ),
+
+                    "filename":
+                        filepath.name
+                })
+
+
+            versions.sort(
+                key=lambda item:
+                    item.get(
+                        "created_at",
+                        ""
+                    ),
+                reverse=True
+            )
+
+
+            response.data = {
+
+                "versions":
+                    versions,
+
+                "count":
+                    len(versions)
+            }
+
+
+            response.msg = (
+                f"{len(versions)} "
+                "persistent version(s) found"
+            )
+
+
+            return response
+
+
+        except Exception as exc:
+
+            response.ok = False
+            response.error = str(exc)
+
+            return response
+
+
+    # =========================================================
+    # RESTAURAR VERSIÃ“N
+    # =========================================================
+
+    def restore_version(
+        self,
+        name,
+        sismolab
+    ):
+
         response = DataAndMsgReturn()
-        filepath = self._get_filepath(name)
 
-        if not Files.file_exists(filepath):
-            response.msg = f"La versión '{name}' no existe en disco."
-            return response
-
-        read_res = Files.read_json(filepath)
-        if not read_res.data:
-            response.error = read_res.error or f"Error al leer el archivo de la versión '{name}'."
-            return response
-
-        version_data = read_res.data
-        state_dict = version_data.get("state", {})
 
         try:
-            # 1. Registrar snapshot previo en Undo para permitir deshacer la restauración
-            if hasattr(sismolab, "_record_undo"):
-                sismolab._record_undo("RESTORE_VERSION", f"Restaurar versión guardada '{name}'")
 
-            # 2. Aplicar estado recuperado
-            self._apply_state(sismolab, state_dict)
-            response.data = version_data
-            response.msg = f"Versión '{name}' restaurada exitosamente."
-        except Exception as e:
-            response.error = f"Error durante la restauración del estado: {str(e)}"
+            name = (
+                self._normalize_name(
+                    name
+                )
+            )
 
-        return response
 
-    def delete_version(self, name: str) -> BaseReturn:
-        """Elimina el archivo de una versión guardada en disco."""
-        response = BaseReturn()
-        filepath = Path(self._get_filepath(name))
+        except ValueError as exc:
+
+            response.ok = False
+            response.error = str(exc)
+
+            return response
+
+
+        filepath = (
+            self._get_filepath(
+                name
+            )
+        )
+
 
         if not filepath.is_file():
+
             response.ok = False
-            response.error = f"Archivo de versión '{name}' no encontrado."
+
+            response.error = (
+                f"Version '{name}' "
+                "does not exist"
+            )
+
             return response
 
-        try:
-            filepath.unlink()
-            response.ok = True
-        except Exception as e:
+
+        read_result = (
+            FilesUtils.read_json(
+                str(filepath)
+            )
+        )
+
+
+        if (
+            not read_result.ok
+            or
+            not isinstance(
+                read_result.data,
+                dict
+            )
+        ):
+
             response.ok = False
-            response.error = str(e)
+
+            response.error = (
+                read_result.error
+                or
+                "Could not read version"
+            )
+
+            return response
+
+
+        version_data = (
+            read_result.data
+        )
+
+
+        if (
+            version_data.get(
+                "schema"
+            )
+            !=
+            self.VERSION_SCHEMA
+        ):
+
+            response.ok = False
+
+            response.error = (
+                "Invalid version schema"
+            )
+
+            return response
+
+
+        if (
+            version_data.get(
+                "schema_version"
+            )
+            !=
+            self.VERSION_SCHEMA_VERSION
+        ):
+
+            response.ok = False
+
+            response.error = (
+                "Unsupported version "
+                "schema version"
+            )
+
+            return response
+
+
+        state = (
+            version_data.get(
+                "state"
+            )
+        )
+
+
+        if not isinstance(
+            state,
+            dict
+        ):
+
+            response.ok = False
+
+            response.error = (
+                "Version does not contain "
+                "a valid state"
+            )
+
+            return response
+
+
+        # Guardamos el estado ANTERIOR
+        # para poder deshacer esta restauraciÃ³n.
+        state_before = (
+            self.undo_service
+            .capture_state(
+                sismolab
+            )
+        )
+
+
+        restore_result = (
+            PersistenceService
+            .apply_state(
+                sismolab,
+                state,
+                success_message=(
+                    f"Version '{name}' "
+                    "restored successfully"
+                )
+            )
+        )
+
+
+        if not restore_result.ok:
+
+            response.ok = False
+            response.error = (
+                restore_result.error
+            )
+
+            return response
+
+
+        # La restauraciÃ³n sÃ­ ocurriÃ³.
+        # Ahora registramos UNA sola acciÃ³n.
+        self.undo_service.push_snapshot(
+            sismolab,
+            "RESTORE_VERSION",
+            (
+                "Restore persistent version "
+                f"'{name}'"
+            ),
+            state_before
+        )
+
+
+        response.data = {
+
+            "name":
+                version_data.get(
+                    "name"
+                ),
+
+            "description":
+                version_data.get(
+                    "description",
+                    ""
+                ),
+
+            "created_at":
+                version_data.get(
+                    "created_at"
+                )
+        }
+
+
+        response.msg = (
+            f"Version '{name}' "
+            "restored successfully"
+        )
+
 
         return response
 
-    def _apply_state(self, sismolab: Any, state_dict: dict) -> None:
-        """
-        Reconstruye los objetos vivos e indicadores dentro de SismoLab respetando la encapsulación.
-        """
-        if not state_dict:
-            return
 
-        scenario = sismolab.get_scenario() if hasattr(sismolab, "get_scenario") else getattr(sismolab, "scenario", None)
+    # =========================================================
+    # ELIMINAR UNA VERSIÃ“N
+    #
+    # No es una operaciÃ³n del escenario,
+    # por eso no entra en Undo operativo.
+    # =========================================================
 
-        # 1. Reloj, Modo Estrés y Parámetros en Scenario
-        if scenario:
-            if "clock" in state_dict and hasattr(scenario, "set_simulation_clock"):
-                scenario.set_simulation_clock(state_dict["clock"])
-            if "stress_mode" in state_dict and hasattr(scenario, "set_stress_mode"):
-                scenario.set_stress_mode(state_dict["stress_mode"])
+    def delete_version(
+        self,
+        name
+    ):
 
-            params = state_dict.get("parameters", {})
-            if params:
-                if "w_hours" in params: scenario.w_hours = float(params["w_hours"])
-                if "r_km" in params: scenario.r_km = float(params["r_km"])
-                if "access_limit_L" in params and hasattr(scenario, "set_access_limit"):
-                    scenario.set_access_limit(int(params["access_limit_L"]))
-                if "archive_age_T" in params: scenario.archive_age_hours = float(params["archive_age_T"])
+        response = BaseReturn()
 
-        # 2. Identificadores Retirados
-        retired_ids = set(state_dict.get("retired_ids", state_dict.get("deleted_ids", [])))
-        if hasattr(sismolab, "_retired_ids"):
-            sismolab._retired_ids = retired_ids
 
-        # 3. Asociaciones
-        if "associations" in state_dict and hasattr(sismolab, "_associations"):
-            sismolab._associations = state_dict["associations"]
+        try:
 
-        # 4. Cola FIFO de Reportes
-        report_queue = sismolab.get_report_queue() if hasattr(sismolab, "get_report_queue") else getattr(sismolab, "report_queue", None)
-        if report_queue and "report_queue" in state_dict:
-            if hasattr(report_queue, "clear"):
-                report_queue.clear()
-            for r_dict in state_dict["report_queue"]:
-                report_obj = Report.from_dict(r_dict) if hasattr(Report, "from_dict") else Report(**r_dict)
-                report_queue.enqueue(report_obj)
+            filepath = (
+                self._get_filepath(
+                    name
+                )
+            )
 
-        # 5. Histórico
-        history_obj = sismolab.get_history() if hasattr(sismolab, "get_history") else getattr(sismolab, "history", None)
-        if history_obj and "history" in state_dict:
-            if hasattr(history_obj, "load_from_dict"):
-                history_obj.load_from_dict(state_dict["history"])
-            elif hasattr(history_obj, "clear"):
-                history_obj.clear()
-                for e_dict in state_dict["history"]:
-                    history_obj.add_event(Event.from_dict(e_dict) if hasattr(Event, "from_dict") else Event(**e_dict))
 
-        # 6. Reconstrucción de la Topología AVL
-        avl_tree = sismolab.get_avl_tree() if hasattr(sismolab, "get_avl_tree") else getattr(sismolab, "avl_tree", None)
-        if avl_tree and ("active_tree_topology" in state_dict or "active_topology" in state_dict):
-            topology_data = state_dict.get("active_tree_topology") or state_dict.get("active_topology")
-            from src.structures.AVLNode import AVLNode
-            reconstructed_root = PersistenceService.rebuild_tree_from_topology(topology_data, AVLNode)
+            if not filepath.is_file():
 
-            if hasattr(avl_tree, "set_root"):
-                avl_tree.set_root(reconstructed_root)
-            else:
-                avl_tree.root = reconstructed_root
+                response.ok = False
+
+                response.error = (
+                    f"Version '{name}' "
+                    "does not exist"
+                )
+
+                return response
+
+
+            filepath.unlink()
+
+
+            return response
+
+
+        except Exception as exc:
+
+            response.ok = False
+            response.error = str(exc)
+
+            return response

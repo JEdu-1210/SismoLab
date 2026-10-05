@@ -1,4 +1,4 @@
-from models.Event import Event
+﻿from src.models.Event import Event
 
 
 class AVLNode:
@@ -7,7 +7,7 @@ class AVLNode:
 
         self._event = event
         # Indica si el acceso a este nodo
-        # se considera costoso según el límite L.
+        # se considera costoso segÃºn el lÃ­mite L.
         self._costly_access = False
 
         # Una hoja tiene altura 0.
