@@ -1,4 +1,4 @@
-from datetime import datetime,timezone
+﻿from datetime import datetime
 
 from src.models.Station import Station
 from src.models.Zone import Zone
@@ -15,19 +15,6 @@ class Scenario:
         archive_age_hours=72,
         stress_mode=False
     ):
-        # --- BLOQUE DE CONVERSIÓN PARA ARCHIVOS Y TEXTO ---
-        if isinstance(simulation_clock, str):
-            try:
-                clean_str = simulation_clock.replace('Z', '').strip()
-                # Intenta ISO primero, luego formato estándar con espacio
-                if "T" in clean_str:
-                    dt = datetime.fromisoformat(clean_str)
-                else:
-                    dt = datetime.strptime(clean_str, "%Y-%m-%d %H:%M:%S")
-                simulation_clock = dt.replace(tzinfo=timezone.utc, microsecond=0)
-            except Exception as e:
-                raise ValueError(f"Formato de fecha no válido en texto: '{simulation_clock}'") from e
-        # --------------------------------------------------
 
         # Validamos primero el reloj.
         if not self._is_valid_clock(
@@ -393,23 +380,70 @@ class Scenario:
     
     # SIMULATION CLOCK
     # Comprueba que el reloj sea
-    # un datetime válido en UTC
-    # y con precisión de segundos.
-    def _is_valid_clock(self, clock) -> bool:
-        """Valida si el reloj es una instancia de datetime o un string de fecha válido."""
-        if isinstance(clock, datetime):
-            return True
-        if isinstance(clock, str):
-            try:
-                datetime.fromisoformat(clock)
-                return True
-            except ValueError:
-                try:
-                    datetime.strptime(clock, "%Y-%m-%d %H:%M:%S")
-                    return True
-                except ValueError:
-                    return False
-        return False
+    # un datetime vÃ¡lido en UTC
+    # y con precisiÃ³n de segundos.
+    def _is_valid_clock(
+        self,
+        date_time
+    ):
+
+        if not isinstance(
+            date_time,
+            datetime
+        ):
+
+            print(
+                "Error: simulation clock "
+                "must be a datetime object"
+            )
+
+            return False
+
+
+        if (
+            date_time.microsecond
+            != 0
+        ):
+
+            print(
+                "Error: simulation clock "
+                "must have second precision"
+            )
+
+            return False
+
+
+        if (
+            date_time.tzinfo is None
+            or
+            date_time.utcoffset()
+            is None
+        ):
+
+            print(
+                "Error: simulation clock "
+                "must use UTC timezone"
+            )
+
+            return False
+
+
+        if (
+            date_time
+            .utcoffset()
+            .total_seconds()
+            != 0
+        ):
+
+            print(
+                "Error: simulation clock "
+                "must be in UTC"
+            )
+
+            return False
+
+
+        return True
 
 
     # El reloj solamente puede avanzar.
