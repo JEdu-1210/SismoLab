@@ -35,7 +35,7 @@ class QueueProcessingService:
         )
 
         # Cuando terminemos el punto 13
-        # pasaremos aquÃ­ el UndoService corregido.
+        # pasaremos aquí el UndoService corregido.
         self.undo_service = (
             undo_service
             if undo_service is not None
@@ -50,7 +50,7 @@ class QueueProcessingService:
     # Agrega N reportes sin procesarlos.
     #
     # Todos se validan primero para evitar
-    # agregar solamente una parte de la rÃ¡faga.
+    # agregar solamente una parte de la ráfaga.
     def enqueue_burst(
         self,
         reports
@@ -77,7 +77,7 @@ class QueueProcessingService:
             return response
 
 
-        # Validar TODA la rÃ¡faga primero.
+        # Validar TODA la ráfaga primero.
         for report in reports:
 
             if not isinstance(
@@ -100,7 +100,7 @@ class QueueProcessingService:
         )
 
 
-        # Ahora sÃ­ se agregan todos,
+        # Ahora sí se agregan todos,
         # conservando exactamente su orden.
         for report in reports:
 
@@ -351,7 +351,7 @@ class QueueProcessingService:
     # Procesa reportes uno por uno,
     # manteniendo una pausa entre pasos.
     #
-    # max_steps es Ãºtil para pruebas.
+    # max_steps es útil para pruebas.
     def process_continuous(
         self,
         pause_seconds=0.5,
@@ -448,7 +448,7 @@ class QueueProcessingService:
             )
 
 
-            # Un error tÃ©cnico detiene
+            # Un error técnico detiene
             # procesamiento continuo.
             if not step_result.ok:
                 break
@@ -488,7 +488,7 @@ class QueueProcessingService:
 
 
     # =========================================================
-    # ENTRAR EN MODO ESTRÃ‰S
+    # ENTRAR EN MODO ESTRÉS
     # =========================================================
 
     def enter_stress_mode(self):
@@ -550,7 +550,7 @@ class QueueProcessingService:
 
 
     # =========================================================
-    # RECUPERACIÃ“N GLOBAL
+    # RECUPERACIÓN GLOBAL
     # =========================================================
 
     def recover_avl_balance(self):
@@ -568,8 +568,8 @@ class QueueProcessingService:
         )
 
 
-        # Esta operaciÃ³n corresponde
-        # especÃ­ficamente al modo estrÃ©s.
+        # Esta operación corresponde
+        # específicamente al modo estrés.
         if not scenario.is_stress_mode():
 
             response.ok = False
@@ -594,7 +594,7 @@ class QueueProcessingService:
 
         # IMPORTANTE:
         #
-        # recover_balance NO vacÃ­a el Ã¡rbol.
+        # recover_balance NO vacía el árbol.
         # Trabaja sobre la estructura existente.
         recovery_cost = (
             avl_tree.recover_balance()
@@ -616,7 +616,7 @@ class QueueProcessingService:
             .update_access_marks()
 
 
-        # Primera protecciÃ³n:
+        # Primera protección:
         # comprobar estructuralmente el balance.
         if not avl_tree.is_balanced():
 
@@ -642,12 +642,12 @@ class QueueProcessingService:
                 self.sismolab,
                 state_before
             )
-            # Sigue en modo estrÃ©s.
+            # Sigue en modo estrés.
             return response
 
 
         # Probamos temporalmente el modo normal
-        # para que la auditorÃ­a exija balance AVL.
+        # para que la auditoría exija balance AVL.
         scenario.set_stress_mode(
             False
         )
@@ -737,7 +737,7 @@ class QueueProcessingService:
             return response
 
 
-        # La auditorÃ­a confirmÃ³ el Ã¡rbol.
+        # La auditoría confirmó el árbol.
         response.data = {
 
             "recovery_completed":
@@ -809,7 +809,7 @@ class QueueProcessingService:
         )
 
 
-    # Registra mÃ©tricas de balanceo utilizando
+    # Registra métricas de balanceo utilizando
     # el log generado por AVLTree.
     def _register_rotation_metrics(
         self,

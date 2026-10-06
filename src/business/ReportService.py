@@ -19,7 +19,7 @@ class ReportService:
         )
 
 
-    # ESTACIÃ“N EMISORA
+    # ESTACIÓN EMISORA
 
     def _get_registered_station(
         self,
@@ -47,14 +47,14 @@ class ReportService:
 
     # IGUALDAD DE DATOS
 
-    # El proyecto define igualdad Ãºnicamente con:
+    # El proyecto define igualdad únicamente con:
     #
     # - magnitude
     # - depth
     # - epicentro (x, y)
     # - date_time
     #
-    # La estaciÃ³n no participa.
+    # La estación no participa.
     def same_event_data(
         self,
         event,
@@ -93,10 +93,10 @@ class ReportService:
 
 
     # PREPARAR EVENT CANDIDATO
-    # Construye cÃ³mo quedarÃ­a el Event
+    # Construye cómo quedaría el Event
     # si los datos del reporte fueran aceptados.
     #
-    # TodavÃ­a NO modifica ninguna estructura.
+    # Todavía NO modifica ninguna estructura.
     def _build_candidate(
         self,
         report
@@ -197,7 +197,7 @@ class ReportService:
             )
 
 
-        # 2. Validaciones bÃ¡sicas.
+        # 2. Validaciones básicas.
 
         if (
             report.identifier < 1
@@ -240,7 +240,7 @@ class ReportService:
             )
 
 
-        # 3. Un ID eliminado jamÃ¡s puede reactivarse
+        # 3. Un ID eliminado jamás puede reactivarse
         #    mediante reportes.
 
         if self.sismolab.is_retired_id(
@@ -323,7 +323,7 @@ class ReportService:
 
 
         # CASO 2:
-        # REVISIÃ“N MENOR
+        # REVISIÓN MENOR
 
         if (
             report.revision
@@ -342,7 +342,7 @@ class ReportService:
 
 
         # CASO 3:
-        # MISMA REVISIÃ“N
+        # MISMA REVISIÓN
 
         if (
             report.revision
@@ -351,7 +351,7 @@ class ReportService:
         ):
 
             # ---------------------------------------------
-            # Mismos datos -> confirmaciÃ³n.
+            # Mismos datos -> confirmación.
             # ---------------------------------------------
 
             if self.same_event_data(
@@ -392,7 +392,7 @@ class ReportService:
                 )
 
 
-            # Misma revisiÃ³n + datos diferentes
+            # Misma revisión + datos diferentes
             # -> CONFLICTO.
 
             metrics.increment_conflicts()
@@ -407,7 +407,7 @@ class ReportService:
 
 
         # CASO 4:
-        # REVISIÃ“N MAYOR
+        # REVISIÓN MAYOR
 
         candidate = self._build_candidate(
             report
@@ -469,7 +469,7 @@ class ReportService:
 
 
         # EVENTO ARCHIVADO:
-        # una revisiÃ³n mayor vÃ¡lida lo reactiva.
+        # una revisión mayor válida lo reactiva.
 
         if (
             event.catalog_status
@@ -508,10 +508,10 @@ class ReportService:
             )
 
 
-        # Un DELETED normalmente ya quedÃ³
+        # Un DELETED normalmente ya quedó
         # atrapado mediante retired_ids.
         #
-        # Esto es solo una protecciÃ³n adicional.
+        # Esto es solo una protección adicional.
         metrics.increment_discarded_reports()
 
         return self._finish(

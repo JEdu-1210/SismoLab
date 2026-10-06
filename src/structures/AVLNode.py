@@ -7,7 +7,7 @@ class AVLNode:
 
         self._event = event
         # Indica si el acceso a este nodo
-        # se considera costoso segÃºn el lÃ­mite L.
+        # se considera costoso según el límite L.
         self._costly_access = False
 
         # Una hoja tiene altura 0.

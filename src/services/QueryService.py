@@ -145,9 +145,9 @@ class QueryService:
 
         # Recorremos:
         #
-        # derecha - raÃ­z - izquierda
+        # derecha - raíz - izquierda
         #
-        # porque las K mayores estÃ¡n
+        # porque las K mayores están
         # hacia la derecha.
         def visit(
             node
@@ -659,7 +659,7 @@ class QueryService:
         #
         # Reutilizamos AssociationService.
         #
-        # NO volvemos a programar aquÃ­
+        # NO volvemos a programar aquí
         # las reglas de W, R, magnitud y tiempo.
         candidates = (
             self.association_service
@@ -856,9 +856,9 @@ class QueryService:
             # Esta consulta NO necesita
             # recorrer el AVL.
             #
-            # Usa el Ã­ndice por ID y
+            # Usa el índice por ID y
             # las asociaciones porque debe
-            # incluir tambiÃ©n archivados.
+            # incluir también archivados.
             "examined_nodes":
                 0,
 
@@ -952,8 +952,8 @@ class QueryService:
 
             # K = (P, M, I)
             #
-            # Si P < 3, todo el subÃ¡rbol
-            # izquierdo tambiÃ©n tendrÃ¡
+            # Si P < 3, todo el subárbol
+            # izquierdo también tendrá
             # prioridad menor o igual.
             #
             # Entonces podemos descartarlo.
@@ -1080,7 +1080,7 @@ class QueryService:
 
 
     # =========================================================
-    # COMPARACIÃ“N DEL AVL Y BST ACTUALES
+    # COMPARACIÓN DEL AVL Y BST ACTUALES
     # =========================================================
 
     def compare_current_avl_bst(
@@ -1300,9 +1300,9 @@ class QueryService:
             "searches":
                 per_key,
 
-            # La consulta de comparaciÃ³n
-            # examinÃ³ esta cantidad total
-            # de nodos AVL durante las bÃºsquedas.
+            # La consulta de comparación
+            # examinó esta cantidad total
+            # de nodos AVL durante las búsquedas.
             "examined_nodes":
                 avl_total,
 
@@ -1334,7 +1334,7 @@ class QueryService:
 
 
     # =========================================================
-    # COMPARACIÃ“N CON DISTINTOS Ã“RDENES DE INSERCIÃ“N
+    # COMPARACIÓN CON DISTINTOS ÓRDENES DE INSERCIÓN
     # =========================================================
 
     def compare_insertion_orders(
@@ -1400,7 +1400,7 @@ class QueryService:
         total_avl_examined = 0
 
 
-        # Construimos Ã¡rboles TEMPORALES.
+        # Construimos árboles TEMPORALES.
         #
         # No modificamos el escenario real.
         for (
@@ -1434,7 +1434,7 @@ class QueryService:
 
 
             # Buscamos las MISMAS claves
-            # en ambos Ã¡rboles.
+            # en ambos árboles.
             for event in ascending_order:
 
                 key = (

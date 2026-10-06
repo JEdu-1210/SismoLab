@@ -47,13 +47,13 @@ class AuditService:
         # IDs presentes en el AVL activo.
         active_ids = set()
 
-        # Nodos fÃ­sicos visitados.
+        # Nodos físicos visitados.
         # Permite detectar ciclos o referencias repetidas.
         active_node_objects = set()
 
-        # IDs de activo + histÃ³rico.
+        # IDs de activo + histórico.
         # Sirve para detectar que una identidad
-        # aparezca en mÃ¡s de un catÃ¡logo.
+        # aparezca en más de un catálogo.
         global_catalog_ids = set()
 
 
@@ -98,8 +98,8 @@ class AuditService:
         )
 
 
-        # TambiÃ©n verificamos que la altura
-        # anunciada por el Ã¡rbol corresponda
+        # También verificamos que la altura
+        # anunciada por el árbol corresponda
         # con la calculada desde cero.
         if (
             calculated_height
@@ -143,7 +143,7 @@ class AuditService:
         )
 
 
-        # Ambos Ã¡rboles deben contener
+        # Ambos árboles deben contener
         # exactamente los mismos Events activos.
         missing_in_bst = (
             active_ids
@@ -190,7 +190,7 @@ class AuditService:
 
 
         # =====================================================
-        # 3. AUDITAR HISTÃ“RICO
+        # 3. AUDITAR HISTÓRICO
         # =====================================================
 
         archived_ids = set()
@@ -234,7 +234,7 @@ class AuditService:
 
                 stress_mode=stress_mode,
 
-                # HistÃ³rico debe conservar
+                # Histórico debe conservar
                 # orden y metadatos,
                 # pero no tiene que obedecer
                 # el balance del AVL activo.
@@ -480,7 +480,7 @@ class AuditService:
             "global_issues":
                 global_issues,
 
-            # Lista plana Ãºtil para GUI.
+            # Lista plana útil para GUI.
             "issues":
                 issues
         }
@@ -691,7 +691,7 @@ class AuditService:
                 metrics,
 
 
-            # Dato Ãºtil para GUI.
+            # Dato útil para GUI.
             "queue_size":
                 sismolab
                 .get_report_queue()
@@ -742,7 +742,7 @@ class AuditService:
         )
 
 
-        # Evita recursiÃ³n infinita en
+        # Evita recursión infinita en
         # caso de ciclo o nodo compartido.
         if (
             object_id
@@ -820,7 +820,7 @@ class AuditService:
             )
 
 
-        # Activo e histÃ³rico tampoco
+        # Activo e histórico tampoco
         # pueden repetir identidad.
         if (
             identifier
@@ -971,7 +971,7 @@ class AuditService:
             )
 
 
-        # TambiÃ©n comprobamos datos derivados
+        # También comprobamos datos derivados
         # como prioridad y zona poblada.
         AuditService._audit_event_data(
             event,
@@ -981,7 +981,7 @@ class AuditService:
 
 
         # =====================================================
-        # RECURSIÃ“N
+        # RECURSIÓN
         # =====================================================
 
         left_height = (
@@ -1098,8 +1098,8 @@ class AuditService:
             1
         ):
 
-            # En estrÃ©s el desbalance es esperado,
-            # por sÃ­ mismo NO invalida la estructura.
+            # En estrés el desbalance es esperado,
+            # por sí mismo NO invalida la estructura.
             if stress_mode:
 
                 AuditService._issue(
@@ -1116,7 +1116,7 @@ class AuditService:
                 )
 
 
-            # En modo normal sÃ­ es error.
+            # En modo normal sí es error.
             else:
 
                 AuditService._issue(
@@ -1652,10 +1652,10 @@ class AuditService:
 
 
         # -----------------------------------------------------
-        # Verificar tambiÃ©n asociaciones AUSENTES.
+        # Verificar también asociaciones AUSENTES.
         #
         # No basta comprobar solamente
-        # las asociaciones que sÃ­ existen.
+        # las asociaciones que sí existen.
         # -----------------------------------------------------
 
         for event in (
@@ -1723,7 +1723,7 @@ class AuditService:
 
 
     # =========================================================
-    # CREAR OBSERVACIÃ“N
+    # CREAR OBSERVACIÓN
     # =========================================================
 
     @staticmethod

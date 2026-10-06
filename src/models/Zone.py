@@ -34,7 +34,7 @@ class Zone:
 
 
     # La zona es inmutable durante
-    # la ejecuciÃ³n del escenario.
+    # la ejecución del escenario.
     #
     # Por eso solo tiene propiedades
     # de lectura y no setters.
@@ -75,7 +75,7 @@ class Zone:
         return self._is_populated
 
 
-    # Valida Ãºnicamente los datos
+    # Valida únicamente los datos
     # internos de esta zona.
     def validate_attributes(self):
 
@@ -102,8 +102,8 @@ class Zone:
             return False
 
 
-        # Todos los lÃ­mites deben
-        # ser nÃºmeros finitos.
+        # Todos los límites deben
+        # ser números finitos.
         values = [
             self._x_min,
             self._x_max,
@@ -124,7 +124,7 @@ class Zone:
                 return False
 
 
-        # Todos los lÃ­mites deben
+        # Todos los límites deben
         # permanecer dentro del plano.
         if (
             self._x_min < 0.0
@@ -145,10 +145,10 @@ class Zone:
             return False
 
 
-        # Una zona debe tener Ã¡rea.
+        # Una zona debe tener área.
         #
-        # Por eso el mÃ­nimo debe ser
-        # estrictamente menor al mÃ¡ximo.
+        # Por eso el mínimo debe ser
+        # estrictamente menor al máximo.
         if (
             self._x_min
             >=
@@ -177,7 +177,7 @@ class Zone:
             return False
 
 
-        # La condiciÃ³n de poblada o
+        # La condición de poblada o
         # no poblada la decide quien
         # crea la zona.
         if not isinstance(
@@ -199,7 +199,7 @@ class Zone:
     # Determina si unas coordenadas
     # pertenecen a esta zona.
     #
-    # Los bordes tambiÃ©n cuentan.
+    # Los bordes también cuentan.
     def contains_point(
         self,
         x,
@@ -236,11 +236,11 @@ class Zone:
 
 
     # Determina si esta zona comparte
-    # Ã¡rea interior con otra zona.
+    # área interior con otra zona.
     #
     # Compartir solamente un borde
     # o una esquina NO se considera
-    # superposiciÃ³n.
+    # superposición.
     def overlaps_with(
         self,
         other_zone

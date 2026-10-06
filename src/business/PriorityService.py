@@ -15,9 +15,9 @@
         if magnitude >= 6.0:
             return 3
 
-        # TambiÃ©n es alta si:
+        # También es alta si:
         # M >= 4.5, H <= 30
-        # y estÃ¡ en zona poblada.
+        # y está en zona poblada.
         if (
             magnitude >= 4.5
             and depth <= 30.0

@@ -45,7 +45,7 @@ class AssociationService:
 
 
     # DIFERENCIA DE TIEMPO
-    # Retorna cuÃ¡ntas horas despuÃ©s ocurriÃ³ B
+    # Retorna cuántas horas después ocurrió B
     # con respecto a A.
     def calculate_time_difference_hours(
         self,
@@ -79,7 +79,7 @@ class AssociationService:
 
 
         # Un Event nunca puede ser
-        # referencia de sÃ­ mismo.
+        # referencia de sí mismo.
         if (
             event_a.identifier
             ==
@@ -129,7 +129,7 @@ class AssociationService:
 
 
         # La diferencia temporal
-        # puede ser como mÃ¡ximo W.
+        # puede ser como máximo W.
         if (
             time_difference
             >
@@ -145,7 +145,7 @@ class AssociationService:
 
 
         # La distancia puede ser
-        # como mÃ¡ximo R.
+        # como máximo R.
         if (
             distance
             >
@@ -219,10 +219,10 @@ class AssociationService:
         )
 
 
-    # ASOCIACIÃ“N ACTUAL DE UN EVENTO
-    # Busca la asociaciÃ³n donde el Event recibido
-    # funciona como posible rÃ©plica.
-    # Cada B tiene como mÃ¡ximo una
+    # ASOCIACIÓN ACTUAL DE UN EVENTO
+    # Busca la asociación donde el Event recibido
+    # funciona como posible réplica.
+    # Cada B tiene como máximo una
     # referencia elegida.
     def get_association_for_event(
         self,
@@ -280,7 +280,7 @@ class AssociationService:
 
 
         # Las asociaciones anteriores
-        # dejan de ser vÃ¡lidas como conjunto.
+        # dejan de ser válidas como conjunto.
         self.sismolab.clear_associations()
 
 
@@ -437,7 +437,7 @@ class AssociationService:
 
     # CAMBIAR W Y R
     # Puede cambiar W, R o ambos.
-    # Si alguno cambia, las asociaciones se recalculan automÃ¡ticamente.
+    # Si alguno cambia, las asociaciones se recalculan automáticamente.
     def update_limits(
         self,
         w_hours=None,

@@ -78,8 +78,8 @@
 
     # EVENTOS ARCHIVADOS
 
-    # Permite aumentar mÃ¡s de uno porque una operaciÃ³n
-    # de archivo puede mover un subÃ¡rbol completo.
+    # Permite aumentar más de uno porque una operación
+    # de archivo puede mover un subárbol completo.
     def increment_archived_events(
         self,
         amount=1
@@ -223,7 +223,7 @@
     # RESUMEN
 
     # Retorna todos los contadores actuales.
-    # SerÃ¡ Ãºtil para interfaz, JSON, versiones y undo.
+    # Será útil para interfaz, JSON, versiones y undo.
     def get_summary(self):
 
         return {
@@ -263,7 +263,7 @@
         }
 
 
-    # Permite restaurar mÃ©tricas desde un estado anterior.
+    # Permite restaurar métricas desde un estado anterior.
     def load_summary(self, data):
 
         self._accepted_corrections = (

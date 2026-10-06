@@ -124,8 +124,8 @@ class PersistenceService:
     # =========================================================
     # EXPORTAR ESTADO A MEMORIA
     #
-    # Este mÃ©todo tambiÃ©n serÃ¡ utilizado
-    # despuÃ©s por Undo y VersionService.
+    # Este método también será utilizado
+    # después por Undo y VersionService.
     # =========================================================
 
     @staticmethod
@@ -246,7 +246,7 @@ class PersistenceService:
 
 
             # -------------------------------------------------
-            # HISTÃ“RICO
+            # HISTÓRICO
             # -------------------------------------------------
 
             "history_topologies": [
@@ -320,7 +320,7 @@ class PersistenceService:
 
 
             # -------------------------------------------------
-            # MÃ‰TRICAS
+            # MÉTRICAS
             # -------------------------------------------------
 
             "metrics":
@@ -445,7 +445,7 @@ class PersistenceService:
             #
             # Construimos todo en un SismoLab TEMPORAL.
             #
-            # TodavÃ­a no tocamos el sistema real.
+            # Todavía no tocamos el sistema real.
             # -------------------------------------------------
 
             temp_scenario = (
@@ -581,7 +581,7 @@ class PersistenceService:
                 .get_rotation_log()
             )
             
-            # La nueva colecciÃ³n puede generar
+            # La nueva colección puede generar
             # asociaciones.
             AssociationService(
                 temp_lab
@@ -821,7 +821,7 @@ class PersistenceService:
             )
 
 
-        # TambiÃ©n permitimos recibir
+        # También permitimos recibir
         # directamente el objeto state.
         else:
 
@@ -844,7 +844,7 @@ class PersistenceService:
     # Nombre antiguo.
     #
     # Lo dejamos para no romper
-    # cÃ³digo previo del compaÃ±ero.
+    # código previo del compañero.
     @staticmethod
     def validate_and_load_topology(
         filepath,
@@ -864,7 +864,7 @@ class PersistenceService:
     # APLICAR UN ESTADO EN MEMORIA
     #
     # Muy importante para:
-    # - carga topolÃ³gica
+    # - carga topológica
     # - Undo
     # - versiones
     # =========================================================
@@ -892,7 +892,7 @@ class PersistenceService:
             )
 
 
-            # Solo cuando TODO funcionÃ³:
+            # Solo cuando TODO funcionó:
             PersistenceService \
                 ._commit_operational_state(
                     sismolab,
@@ -1279,7 +1279,7 @@ class PersistenceService:
 
 
         # =====================================================
-        # HISTÃ“RICO
+        # HISTÓRICO
         # =====================================================
 
         history_topologies = (
@@ -1471,7 +1471,7 @@ class PersistenceService:
         # =====================================================
         # BST COMPARATIVO
         #
-        # Se reconstruye DIRECTAMENTE por topologÃ­a,
+        # Se reconstruye DIRECTAMENTE por topología,
         # no mediante insert().
         # =====================================================
 
@@ -1552,7 +1552,7 @@ class PersistenceService:
 
 
         # =====================================================
-        # MÃ‰TRICAS
+        # MÉTRICAS
         # =====================================================
 
         metrics_data = (
@@ -1575,14 +1575,14 @@ class PersistenceService:
         # ASOCIACIONES
         # =====================================================
 
-        # Como nuestra polÃ­tica es determinista,
+        # Como nuestra política es determinista,
         # las reconstruimos.
         AssociationService(
             lab
         ).recalculate_all()
 
 
-        # Si el JSON guardÃ³ asociaciones,
+        # Si el JSON guardó asociaciones,
         # verificamos que coincidan EXACTAMENTE
         # con el resultado reconstruido.
         saved_associations = (
@@ -1863,7 +1863,7 @@ class PersistenceService:
 
 
         # Un mismo Event no puede aparecer
-        # dos veces en activo/histÃ³rico.
+        # dos veces en activo/histórico.
         if (
             event.identifier
             in global_ids
@@ -2626,7 +2626,7 @@ class PersistenceService:
 
 
         # -----------------------------------------------------
-        # VALIDACIÃ“N FINAL
+        # VALIDACIÓN FINAL
         # -----------------------------------------------------
 
         if not event.validateAttributes():
@@ -2853,7 +2853,7 @@ class PersistenceService:
 
 
         # Reutilizamos Event solamente
-        # como validador fÃ­sico.
+        # como validador físico.
         validator_event = Event(
             identifier,
             magnitude,
@@ -2956,7 +2956,7 @@ class PersistenceService:
 
 
     # =========================================================
-    # MÃ‰TRICAS
+    # MÉTRICAS
     # =========================================================
 
     @staticmethod
@@ -3090,7 +3090,7 @@ class PersistenceService:
             )
 
 
-    # Copia solamente configuraciÃ³n,
+    # Copia solamente configuración,
     # no Events.
     @staticmethod
     def _clone_scenario_configuration(
@@ -3160,7 +3160,7 @@ class PersistenceService:
     # - undo stack
     # - versiones
     #
-    # Esto serÃ¡ importante en el punto 13.
+    # Esto será importante en el punto 13.
     @staticmethod
     def _commit_operational_state(
         target,

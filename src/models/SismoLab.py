@@ -30,8 +30,8 @@ class SismoLab:
         self._bst_tree = BSTTree()
 
 
-        # HistÃ³rico que conserva las raÃ­ces
-        # de los subÃ¡rboles archivados.
+        # Histórico que conserva las raíces
+        # de los subárboles archivados.
         self._history = History()
 
 
@@ -130,7 +130,7 @@ class SismoLab:
         )
 
 
-    # Agrega una nueva versiÃ³n.
+    # Agrega una nueva versión.
     def add_version(
         self,
         version: Version
@@ -141,7 +141,7 @@ class SismoLab:
         )
 
 
-    # Busca una versiÃ³n por nombre.
+    # Busca una versión por nombre.
     def get_version_by_name(
         self,
         name
@@ -157,7 +157,7 @@ class SismoLab:
         return None
 
 
-    # Elimina una versiÃ³n almacenada.
+    # Elimina una versión almacenada.
     def remove_version(
         self,
         version: Version
@@ -185,7 +185,7 @@ class SismoLab:
         )
 
 
-    # Agrega una asociaciÃ³n.
+    # Agrega una asociación.
     def add_association(
         self,
         association: Association
@@ -196,7 +196,7 @@ class SismoLab:
         )
 
 
-    # Elimina una asociaciÃ³n.
+    # Elimina una asociación.
     def remove_association(
         self,
         association: Association
@@ -214,7 +214,7 @@ class SismoLab:
 
         return True
 
-    # Elimina todas las asociaciones actuales. Se utilizarÃ¡ cuando sea necesario
+    # Elimina todas las asociaciones actuales. Se utilizará cuando sea necesario
     # recalcularlas completamente.
     def clear_associations(self):
 
@@ -235,7 +235,7 @@ class SismoLab:
 
     # Elimina el ID del conjunto de retirados.
     #
-    # SerÃ¡ Ãºtil al restaurar un estado anterior.
+    # Será útil al restaurar un estado anterior.
     def remove_retired_id(
         self,
         identifier

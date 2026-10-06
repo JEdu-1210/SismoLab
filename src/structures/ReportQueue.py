@@ -23,7 +23,7 @@ class ReportQueue:
 
     # Retira y retorna el primer reporte de la cola.
     #
-    # Si la cola estÃ¡ vacÃ­a retorna None.
+    # Si la cola está vacía retorna None.
     def dequeue(self):
 
         if self.is_empty():
@@ -75,7 +75,7 @@ class ReportQueue:
 
     # Agrega un reporte nuevamente al frente.
     #
-    # Este mÃ©todo serÃ¡ Ãºtil al deshacer
+    # Este método será útil al deshacer
     # un paso de procesamiento de la cola.
     def restore_front(
         self,

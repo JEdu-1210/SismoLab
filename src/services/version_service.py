@@ -83,7 +83,7 @@ class VersionService:
 
 
     # =========================================================
-    # ARCHIVO DE UNA VERSIÃ“N
+    # ARCHIVO DE UNA VERSIÓN
     # =========================================================
 
     # El hash evita colisiones entre nombres
@@ -146,7 +146,7 @@ class VersionService:
 
 
     # =========================================================
-    # CREAR VERSIÃ“N
+    # CREAR VERSIÓN
     # =========================================================
 
     def create_version(
@@ -432,7 +432,7 @@ class VersionService:
 
 
     # =========================================================
-    # RESTAURAR VERSIÃ“N
+    # RESTAURAR VERSIÓN
     # =========================================================
 
     def restore_version(
@@ -570,7 +570,7 @@ class VersionService:
 
 
         # Guardamos el estado ANTERIOR
-        # para poder deshacer esta restauraciÃ³n.
+        # para poder deshacer esta restauración.
         state_before = (
             self.undo_service
             .capture_state(
@@ -602,8 +602,8 @@ class VersionService:
             return response
 
 
-        # La restauraciÃ³n sÃ­ ocurriÃ³.
-        # Ahora registramos UNA sola acciÃ³n.
+        # La restauración sí ocurrió.
+        # Ahora registramos UNA sola acción.
         self.undo_service.push_snapshot(
             sismolab,
             "RESTORE_VERSION",
@@ -645,9 +645,9 @@ class VersionService:
 
 
     # =========================================================
-    # ELIMINAR UNA VERSIÃ“N
+    # ELIMINAR UNA VERSIÓN
     #
-    # No es una operaciÃ³n del escenario,
+    # No es una operación del escenario,
     # por eso no entra en Undo operativo.
     # =========================================================
 

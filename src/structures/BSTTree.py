@@ -8,13 +8,13 @@ class BSTTree:
         self._root = None
 
 
-    # Retorna la raÃ­z del Ã¡rbol.
+    # Retorna la raíz del árbol.
     def get_root(self):
 
         return self._root
 
 
-    #  Asigna la raÃ­z del Ã¡rbol.
+    #  Asigna la raíz del árbol.
     def set_root(self, node):
 
         self._root = node
@@ -23,8 +23,8 @@ class BSTTree:
             self._root.set_parent(None)
 
 
-    # Retorna True si el Ã¡rbol estÃ¡ vacÃ­o.
-    # Retorna False si el Ã¡rbol tiene al menos un nodo.
+    # Retorna True si el árbol está vacío.
+    # Retorna False si el árbol tiene al menos un nodo.
     def is_empty(self):
 
         if self._root is None:
@@ -37,7 +37,7 @@ class BSTTree:
     # Recibe un evento.
     # Crea un BSTNode y lo inserta usando la llave del Event.
     # Retorna:
-    # - el nodo insertado si la inserciÃ³n fue exitosa.
+    # - el nodo insertado si la inserción fue exitosa.
     # - None si la llave ya existe.
     def insert(self, event):
 
@@ -54,7 +54,7 @@ class BSTTree:
         )
 
 
-    # MÃ©todo recursivo utilizado por insert().
+    # Método recursivo utilizado por insert().
     def _insert(self, new_node, current_node):
 
         new_key = new_node.get_key()
@@ -66,8 +66,8 @@ class BSTTree:
             return None
 
 
-        # si la  llave actual no tiene hijos, se inserta el nuevo nodo como hijo izquierdo o derecho segÃºn corresponda.
-        # si la llave actual tiene hijos, se llama recursivamente a _insert() en el hijo izquierdo o derecho segÃºn corresponda.
+        # si la  llave actual no tiene hijos, se inserta el nuevo nodo como hijo izquierdo o derecho según corresponda.
+        # si la llave actual tiene hijos, se llama recursivamente a _insert() en el hijo izquierdo o derecho según corresponda.
         # llaves mayores van a la derecha.
         if new_key > current_key:
 
@@ -116,7 +116,7 @@ class BSTTree:
         )
 
 
-    # MÃ©todo recursivo utilizado por search().
+    # Método recursivo utilizado por search().
     def _search(self, key, current_node):
 
         if current_node is None:
@@ -148,7 +148,7 @@ class BSTTree:
     # busca un nodo usando la llave completa (priority, magnitude, identifier).
     # Retorna una tupla (node, comparisons) donde:
     # - node es el nodo encontrado o None.
-    # - comparisons es el nÃºmero de nodos examinados.
+    # - comparisons es el número de nodos examinados.
     #
     # Returns:
     # (node, comparisons)
@@ -187,8 +187,8 @@ class BSTTree:
     # SEARCH BY ID
 
     # busca un nodo usando el identificador del evento.
-    # el Ã¡rbol estÃ¡ ordenado por (priority, magnitude, identifier), no solo por identifier.
-    # por esa razÃ³n, ambos subÃ¡rboles pueden necesitar ser visitados.
+    # el árbol está ordenado por (priority, magnitude, identifier), no solo por identifier.
+    # por esa razón, ambos subárboles pueden necesitar ser visitados.
 
     # Returns:
     # - BSTNode si es encontrado.
@@ -218,7 +218,7 @@ class BSTTree:
             return current_node
 
 
-        # buscar en el subÃ¡rbol izquierdo
+        # buscar en el subárbol izquierdo
         found_node = self._search_by_id(
             identifier,
             current_node.get_left()
@@ -230,7 +230,7 @@ class BSTTree:
             return found_node
 
 
-        # si no se encontrÃ³ en el subÃ¡rbol izquierdo, buscar en el subÃ¡rbol derecho
+        # si no se encontró en el subárbol izquierdo, buscar en el subárbol derecho
         return self._search_by_id(
             identifier,
             current_node.get_right()

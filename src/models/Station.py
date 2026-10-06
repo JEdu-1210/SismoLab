@@ -24,7 +24,7 @@ class Station:
 
 
     # Las estaciones permanecen
-    # inmutables durante la ejecuciÃ³n.
+    # inmutables durante la ejecución.
     #
     # Se permiten lecturas pero
     # no existen setters.

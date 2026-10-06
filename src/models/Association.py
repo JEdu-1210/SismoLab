@@ -8,7 +8,7 @@ class Association:
         reference_event: Event,
         aftershock_event: Event
     ):
-        # Un evento no puede ser referencia de sÃ­ mismo
+        # Un evento no puede ser referencia de sí mismo
         if (
             reference_event.identifier
             ==
@@ -29,7 +29,7 @@ class Association:
 
     def to_dict(self) -> dict:
         """
-        Retorna la representaciÃ³n en diccionario serializable a JSON.
+        Retorna la representación en diccionario serializable a JSON.
         """
         return {
             "reference_event_id": self._reference_event.identifier,

@@ -10,12 +10,12 @@ class UndoService:
     # CAPTURAR ESTADO
     # =========================================================
 
-    # Obtiene una fotografÃ­a COMPLETA del estado
-    # operativo sin modificar todavÃ­a la pila.
+    # Obtiene una fotografía COMPLETA del estado
+    # operativo sin modificar todavía la pila.
     #
-    # Esto es Ãºtil porque primero podemos ejecutar
-    # la operaciÃ³n y solamente guardar la acciÃ³n
-    # si realmente terminÃ³ correctamente.
+    # Esto es útil porque primero podemos ejecutar
+    # la operación y solamente guardar la acción
+    # si realmente terminó correctamente.
     def capture_state(
         self,
         sismolab
@@ -46,7 +46,7 @@ class UndoService:
 
 
 
-        # MÃ©tricas antes de la acciÃ³n.
+        # Métricas antes de la acción.
         before_metrics = (
             state_before.get(
                 "metrics",
@@ -55,7 +55,7 @@ class UndoService:
         )
 
 
-        # MÃ©tricas despuÃ©s de la acciÃ³n.
+        # Métricas después de la acción.
         state_after = (
             PersistenceService
             .export_state(
@@ -133,9 +133,9 @@ class UndoService:
     # REGISTRAR DIRECTAMENTE
     # =========================================================
 
-    # Se conserva como mÃ©todo auxiliar para operaciones
-    # donde sabemos que inmediatamente despuÃ©s habrÃ¡
-    # una modificaciÃ³n.
+    # Se conserva como método auxiliar para operaciones
+    # donde sabemos que inmediatamente después habrá
+    # una modificación.
     #
     # Para operaciones que pueden fallar es mejor:
     #
@@ -211,9 +211,9 @@ class UndoService:
         #
         # Primero hacemos peek().
         #
-        # No hacemos pop todavÃ­a porque si por
-        # alguna razÃ³n la restauraciÃ³n falla,
-        # no queremos perder la acciÃ³n.
+        # No hacemos pop todavía porque si por
+        # alguna razón la restauración falla,
+        # no queremos perder la acción.
         action = stack.peek()
 
 
@@ -248,8 +248,8 @@ class UndoService:
             return response
 
 
-        # La restauraciÃ³n fue correcta.
-        # Ahora sÃ­ retiramos la acciÃ³n.
+        # La restauración fue correcta.
+        # Ahora sí retiramos la acción.
         stack.pop()
 
 
@@ -302,8 +302,8 @@ class UndoService:
         )
 
 
-        # Mostramos primero la acciÃ³n
-        # que se desharÃ­a inmediatamente.
+        # Mostramos primero la acción
+        # que se desharía inmediatamente.
         result = []
 
 
@@ -364,11 +364,11 @@ class UndoService:
     # CARGA POR INSERCIONES + UNDO
     # =========================================================
 
-    # La GUI debe utilizar ESTE mÃ©todo cuando
+    # La GUI debe utilizar ESTE método cuando
     # quiera cargar un archivo por inserciones.
     #
     # De esa manera toda la carga cuenta como
-    # UNA sola acciÃ³n de Undo.
+    # UNA sola acción de Undo.
     def load_by_insertions(
         self,
         filepath,

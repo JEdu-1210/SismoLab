@@ -24,7 +24,7 @@ class UndoAction:
 
         # Guardamos una copia independiente.
         #
-        # AsÃ­ los cambios posteriores del sistema
+        # Así los cambios posteriores del sistema
         # no modifican el estado guardado.
         self._state_before = deepcopy(
             state_before

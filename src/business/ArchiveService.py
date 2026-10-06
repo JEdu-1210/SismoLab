@@ -20,7 +20,7 @@ class ArchiveService:
         self.undo_service = UndoService()
 
     # ELEGIR MEJOR CANDIDATO
-    # Busca automÃ¡ticamente la mejor rama elegible.
+    # Busca automáticamente la mejor rama elegible.
     # Retorna un diccionario con:
     # - root
     # - count
@@ -61,7 +61,7 @@ class ArchiveService:
         return best_candidate
 
 
-    # Recorre el Ã¡rbol en postorden.
+    # Recorre el árbol en postorden.
     # Retorna:
     # (
     #     subtree_is_eligible,
@@ -120,7 +120,7 @@ class ArchiveService:
         )
 
 
-        # El subÃ¡rbol completo solamente es
+        # El subárbol completo solamente es
         # elegible si TODOS sus Events cumplen.
         subtree_is_eligible = (
             event_is_eligible
@@ -144,8 +144,8 @@ class ArchiveService:
         )
 
 
-        # Si todo este subÃ¡rbol es elegible,
-        # tambiÃ©n lo evaluamos como candidato.
+        # Si todo este subárbol es elegible,
+        # también lo evaluamos como candidato.
         if subtree_is_eligible:
 
             candidate = {
@@ -171,11 +171,11 @@ class ArchiveService:
         )
 
 
-    # Decide cuÃ¡l de dos candidatos gana.
+    # Decide cuál de dos candidatos gana.
     # Prioridad:
     # 1. Mayor cantidad de nodos.
-    # 2. Mayor profundidad de la raÃ­z.
-    # 3. Mayor identifier de la raÃ­z.
+    # 2. Mayor profundidad de la raíz.
+    # 3. Mayor identifier de la raíz.
     def _better_candidate(
         self,
         candidate1,
@@ -238,7 +238,7 @@ class ArchiveService:
 
     # VISTA PREVIA
 
-    # Prepara la informaciÃ³n que la GUI mostrarÃ¡
+    # Prepara la información que la GUI mostrará
     # antes de confirmar el archivo.
     def get_archive_preview(self):
 
@@ -316,7 +316,7 @@ class ArchiveService:
 
         # IMPORTANTE:
         # fijamos el conjunto ANTES de modificar
-        # cualquier Ã¡rbol.
+        # cualquier árbol.
         self._collect_events(
             root,
             events
@@ -337,7 +337,7 @@ class ArchiveService:
 
 
         # 1. Verificar primero que TODOS los Events
-        #    tambiÃ©n existan en el BST.
+        #    también existan en el BST.
 
         for event in events:
 
@@ -353,11 +353,11 @@ class ArchiveService:
                 )
 
 
-        # AquÃ­ posteriormente registraremos
+        # Aquí posteriormente registraremos
         # UN SOLO snapshot para Undo.
         # 2. Eliminar esos mismos Events del BST.
         # No archivamos una rama BST porque su
-        # topologÃ­a puede ser distinta a la del AVL.
+        # topología puede ser distinta a la del AVL.
 
         state_before = (
             self.undo_service
@@ -420,7 +420,7 @@ class ArchiveService:
             event.archive()
 
 
-        # 5. Guardar la raÃ­z del subÃ¡rbol
+        # 5. Guardar la raíz del subárbol
         #    dentro del History.
 
         history.add_archived_root(
@@ -429,7 +429,7 @@ class ArchiveService:
 
 
         # 6. Restaurar balance solamente en modo normal.
-        # En estrÃ©s NO realizamos rotaciones.
+        # En estrés NO realizamos rotaciones.
 
         if not scenario.is_stress_mode():
             avl_tree.recover_balance()
@@ -444,8 +444,8 @@ class ArchiveService:
         # - NO eliminamos sus asociaciones.
         # Siguen existiendo, pero como ARCHIVED.
 
-        # AquÃ­ posteriormente actualizaremos:
-        # - mÃ©tricas
+        # Aquí posteriormente actualizaremos:
+        # - métricas
         # - Undo
         # - GUI
         metrics = (

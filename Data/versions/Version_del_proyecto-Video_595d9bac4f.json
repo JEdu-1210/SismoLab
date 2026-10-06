@@ -1,0 +1,354 @@
+{
+  "created_at": "2026-10-06T18:18:51+00:00",
+  "description": "",
+  "name": "Version_del_proyecto-Video",
+  "schema": "SismoLabAVLVersion",
+  "schema_version": 1,
+  "state": {
+    "active_avl_topology": {
+      "balance_factor": 0,
+      "costly_access": false,
+      "event": {
+        "accepted_stations": [
+          "EST-A"
+        ],
+        "attention_status": "PENDING",
+        "catalog_status": "ACTIVE",
+        "date_time": "2026-10-06T17:13:00Z",
+        "depth": 30.0,
+        "identifier": 104,
+        "is_populated_zone": true,
+        "magnitude": 4.5,
+        "priority": 3,
+        "revision": 1,
+        "x": 200.0,
+        "y": 100.0
+      },
+      "height": 3,
+      "left": {
+        "balance_factor": 1,
+        "costly_access": false,
+        "event": {
+          "accepted_stations": [
+            "EST-A"
+          ],
+          "attention_status": "PENDING",
+          "catalog_status": "ACTIVE",
+          "date_time": "2026-10-06T17:13:00Z",
+          "depth": 70.0,
+          "identifier": 102,
+          "is_populated_zone": false,
+          "magnitude": 5.0,
+          "priority": 2,
+          "revision": 1,
+          "x": 500.0,
+          "y": 500.0
+        },
+        "height": 2,
+        "left": {
+          "balance_factor": 1,
+          "costly_access": false,
+          "event": {
+            "accepted_stations": [
+              "EST-A"
+            ],
+            "attention_status": "PENDING",
+            "catalog_status": "ACTIVE",
+            "date_time": "2026-10-06T17:13:00Z",
+            "depth": 70.0,
+            "identifier": 101,
+            "is_populated_zone": false,
+            "magnitude": 5.0,
+            "priority": 2,
+            "revision": 1,
+            "x": 500.0,
+            "y": 500.0
+          },
+          "height": 1,
+          "left": {
+            "balance_factor": 0,
+            "costly_access": false,
+            "event": {
+              "accepted_stations": [
+                "EST-A"
+              ],
+              "attention_status": "PENDING",
+              "catalog_status": "ACTIVE",
+              "date_time": "2026-10-06T17:13:00Z",
+              "depth": 70.0,
+              "identifier": 105,
+              "is_populated_zone": false,
+              "magnitude": 4.2,
+              "priority": 1,
+              "revision": 1,
+              "x": 700.0,
+              "y": 700.0
+            },
+            "height": 0,
+            "left": null,
+            "right": null
+          },
+          "right": null
+        },
+        "right": {
+          "balance_factor": 0,
+          "costly_access": false,
+          "event": {
+            "accepted_stations": [
+              "EST-A"
+            ],
+            "attention_status": "PENDING",
+            "catalog_status": "ACTIVE",
+            "date_time": "2026-10-06T17:13:00Z",
+            "depth": 70.0,
+            "identifier": 103,
+            "is_populated_zone": false,
+            "magnitude": 5.0,
+            "priority": 2,
+            "revision": 1,
+            "x": 500.0,
+            "y": 500.0
+          },
+          "height": 0,
+          "left": null,
+          "right": null
+        }
+      },
+      "right": {
+        "balance_factor": 0,
+        "costly_access": false,
+        "event": {
+          "accepted_stations": [
+            "EST-A"
+          ],
+          "attention_status": "PENDING",
+          "catalog_status": "ACTIVE",
+          "date_time": "2026-10-06T17:13:00Z",
+          "depth": 70.0,
+          "identifier": 107,
+          "is_populated_zone": true,
+          "magnitude": 6.7,
+          "priority": 3,
+          "revision": 1,
+          "x": 100.0,
+          "y": 100.0
+        },
+        "height": 2,
+        "left": {
+          "balance_factor": 1,
+          "costly_access": false,
+          "event": {
+            "accepted_stations": [
+              "EST-A",
+              "EST-B"
+            ],
+            "attention_status": "PENDING",
+            "catalog_status": "ACTIVE",
+            "date_time": "2026-10-06T17:13:00Z",
+            "depth": 10.0,
+            "identifier": 106,
+            "is_populated_zone": false,
+            "magnitude": 6.4,
+            "priority": 3,
+            "revision": 3,
+            "x": 700.0,
+            "y": 700.0
+          },
+          "height": 1,
+          "left": {
+            "balance_factor": 0,
+            "costly_access": false,
+            "event": {
+              "accepted_stations": [
+                "EST-A"
+              ],
+              "attention_status": "PENDING",
+              "catalog_status": "ACTIVE",
+              "date_time": "2026-10-06T17:13:00Z",
+              "depth": 30.0,
+              "identifier": 300,
+              "is_populated_zone": true,
+              "magnitude": 4.5,
+              "priority": 3,
+              "revision": 1,
+              "x": 200.0,
+              "y": 100.0
+            },
+            "height": 0,
+            "left": null,
+            "right": null
+          },
+          "right": null
+        },
+        "right": {
+          "balance_factor": 0,
+          "costly_access": false,
+          "event": {
+            "accepted_stations": [
+              "EST-A"
+            ],
+            "attention_status": "PENDING",
+            "catalog_status": "ACTIVE",
+            "date_time": "2026-10-06T17:13:00Z",
+            "depth": 70.0,
+            "identifier": 109,
+            "is_populated_zone": true,
+            "magnitude": 6.7,
+            "priority": 3,
+            "revision": 1,
+            "x": 100.0,
+            "y": 100.0
+          },
+          "height": 1,
+          "left": {
+            "balance_factor": 0,
+            "costly_access": false,
+            "event": {
+              "accepted_stations": [
+                "EST-A"
+              ],
+              "attention_status": "PENDING",
+              "catalog_status": "ACTIVE",
+              "date_time": "2026-10-06T17:13:00Z",
+              "depth": 70.0,
+              "identifier": 108,
+              "is_populated_zone": true,
+              "magnitude": 6.7,
+              "priority": 3,
+              "revision": 1,
+              "x": 100.0,
+              "y": 100.0
+            },
+            "height": 0,
+            "left": null,
+            "right": null
+          },
+          "right": {
+            "balance_factor": 0,
+            "costly_access": false,
+            "event": {
+              "accepted_stations": [
+                "EST-A"
+              ],
+              "attention_status": "PENDING",
+              "catalog_status": "ACTIVE",
+              "date_time": "2026-10-06T17:13:00Z",
+              "depth": 70.0,
+              "identifier": 110,
+              "is_populated_zone": true,
+              "magnitude": 6.7,
+              "priority": 3,
+              "revision": 1,
+              "x": 100.0,
+              "y": 100.0
+            },
+            "height": 0,
+            "left": null,
+            "right": null
+          }
+        }
+      }
+    },
+    "associations": [],
+    "comparison_bst_topology": {
+      "event_id": 101,
+      "left": {
+        "event_id": 105,
+        "left": null,
+        "right": null
+      },
+      "right": {
+        "event_id": 102,
+        "left": null,
+        "right": {
+          "event_id": 103,
+          "left": null,
+          "right": {
+            "event_id": 104,
+            "left": null,
+            "right": {
+              "event_id": 106,
+              "left": {
+                "event_id": 300,
+                "left": null,
+                "right": null
+              },
+              "right": {
+                "event_id": 107,
+                "left": null,
+                "right": {
+                  "event_id": 108,
+                  "left": null,
+                  "right": {
+                    "event_id": 109,
+                    "left": null,
+                    "right": {
+                      "event_id": 110,
+                      "left": null,
+                      "right": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "deleted_events": [],
+    "history_topologies": [],
+    "metrics": {
+      "accepted_corrections": 2,
+      "archived_events": 0,
+      "conflicts": 1,
+      "discarded_reports": 1,
+      "left_rotations": 7,
+      "ll_cases": 0,
+      "lr_cases": 0,
+      "mass_archives": 0,
+      "right_rotations": 2,
+      "rl_cases": 2,
+      "rr_cases": 5
+    },
+    "report_queue": [],
+    "retired_ids": [],
+    "scenario": {
+      "access_limit": 3,
+      "archive_age_hours": 72.0,
+      "r_km": 40.0,
+      "simulation_clock": "2026-10-06T17:13:18Z",
+      "stations": [
+        {
+          "name": "EST-A",
+          "x": 50.0,
+          "y": 50.0
+        },
+        {
+          "name": "EST-B",
+          "x": 900.0,
+          "y": 900.0
+        }
+      ],
+      "stress_mode": false,
+      "w_hours": 48.0,
+      "zones": [
+        {
+          "is_populated": true,
+          "name": "CENTRO-POP",
+          "x_max": 200.0,
+          "x_min": 0.0,
+          "y_max": 200.0,
+          "y_min": 0.0
+        },
+        {
+          "is_populated": false,
+          "name": "EXTERIOR",
+          "x_max": 600.0,
+          "x_min": 300.0,
+          "y_max": 600.0,
+          "y_min": 300.0
+        }
+      ]
+    }
+  }
+}

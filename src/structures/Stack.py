@@ -8,7 +8,7 @@ class Stack:
         self._actions = []
 
 
-    # Agrega una acciÃ³n en la parte superior de la pila.
+    # Agrega una acción en la parte superior de la pila.
     def push(
         self,
         action: UndoAction
@@ -19,7 +19,7 @@ class Stack:
         )
 
 
-    # Retira y retorna la Ãºltima acciÃ³n agregada.
+    # Retira y retorna la última acción agregada.
     def pop(self):
 
         if self.is_empty():
@@ -30,7 +30,7 @@ class Stack:
         return self._actions.pop()
 
 
-    # Retorna la acciÃ³n superior sin eliminarla.
+    # Retorna la acción superior sin eliminarla.
     def peek(self):
 
         if self.is_empty():
@@ -62,15 +62,15 @@ class Stack:
     # Retorna una copia de las acciones
     # almacenadas en la pila.
     #
-    # La Ãºltima posiciÃ³n corresponde
-    # a la acciÃ³n que se desharÃ¡ primero.
+    # La última posición corresponde
+    # a la acción que se deshará primero.
     def get_actions(self):
 
         return list(
             self._actions
         )
     
-    # VacÃ­a completamente la pila.
+    # Vacía completamente la pila.
     def clear(self):
 
         self._actions.clear()
